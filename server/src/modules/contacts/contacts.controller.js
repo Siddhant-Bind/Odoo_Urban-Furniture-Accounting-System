@@ -81,3 +81,35 @@ export const updateContact = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getMyInvoices = async (req, res, next) => {
+  try {
+    const { contactId, role } = req.user;
+    if (role === 'CONTACT' && !contactId) return res.status(403).json({ error: 'No contact associated with this user' });
+    
+    // For admin/invoicing user, this endpoint might just return all, or we could restrict it purely to CONTACT users
+    // Requirements state: Restrict self-service invoice/bill lists to req.user.contactId
+    const invoices = await prisma.customerInvoice.findMany({
+      where: role === 'CONTACT' ? { customerId: contactId } : {},
+      include: { lines: true }
+    });
+    res.json(invoices);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyBills = async (req, res, next) => {
+  try {
+    const { contactId, role } = req.user;
+    if (role === 'CONTACT' && !contactId) return res.status(403).json({ error: 'No contact associated with this user' });
+    
+    const bills = await prisma.vendorBill.findMany({
+      where: role === 'CONTACT' ? { vendorId: contactId } : {},
+      include: { lines: true }
+    });
+    res.json(bills);
+  } catch (error) {
+    next(error);
+  }
+};

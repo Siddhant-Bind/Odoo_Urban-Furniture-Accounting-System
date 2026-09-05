@@ -9,6 +9,8 @@ router.use(requireAuth);
 
 router.post('/', upload.single('profileImage'), contactsController.createContact);
 router.get('/', contactsController.getContacts);
+router.get('/me/invoices', contactsController.getMyInvoices);
+router.get('/me/bills', contactsController.getMyBills);
 router.get('/:id', contactsController.getContactById);
 router.put('/:id', upload.single('profileImage'), contactsController.updateContact);
 
