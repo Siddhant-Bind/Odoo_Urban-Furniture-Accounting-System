@@ -50,9 +50,23 @@ export const createCustomerInvoice = async (req, res, next) => {
 export const getCustomerInvoices = async (req, res, next) => {
   try {
     const invoices = await prisma.customerInvoice.findMany({
-      include: { customer: true, lines: true }
+      include: { customer: true, lines: true, payments: true },
+      orderBy: { id: 'desc' }
     });
     res.json(invoices);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCustomerInvoiceById = async (req, res, next) => {
+  try {
+    const invoice = await prisma.customerInvoice.findUnique({
+      where: { id: parseInt(req.params.id) },
+      include: { customer: true, lines: { include: { product: true } }, payments: true }
+    });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    res.json(invoice);
   } catch (error) {
     next(error);
   }

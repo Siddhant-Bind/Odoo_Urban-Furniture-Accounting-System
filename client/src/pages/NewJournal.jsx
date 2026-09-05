@@ -1,8 +1,8 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, X } from "lucide-react";
 
-const ACCOUNTS = ["Sales Income A/c", "Purchase Expense A/c", "Bank A/c", "Cash A/c", "Debtors A/c", "Creditors A/c", "Capital A/c", "Other Expense A/c"];
+import { fetchClient } from "../utils/api";
 
 export default function NewJournal() {
   const navigate = useNavigate();
@@ -10,8 +10,40 @@ export default function NewJournal() {
   const [acSearch, setAcSearch] = useState("");
   const [showAcDrop, setShowAcDrop] = useState(false);
 
-  const filtered = ACCOUNTS.filter(a => a.toLowerCase().includes(acSearch.toLowerCase()));
-  const selectAc = (a) => { setForm(f => ({ ...f, account: a })); setAcSearch(a); setShowAcDrop(false); };
+  const [accounts, setAccounts] = useState([]);
+
+  React.useEffect(() => {
+    fetchClient('/accounts').then(setAccounts).catch(console.error);
+  }, []);
+
+  const filtered = accounts.filter(a => a.name.toLowerCase().includes(acSearch.toLowerCase()));
+  const selectAc = (a) => { setForm(f => ({ ...f, account: a.id })); setAcSearch(a.name); setShowAcDrop(false); };
+
+  const handleSave = async () => {
+    if (form.name && form.type) {
+      const typeMap = {
+        "Sales": "SALE",
+        "Purchase": "PURCHASE",
+        "Bank": "BANK",
+        "Cash": "CASH"
+      };
+
+      try {
+        await fetchClient('/journals', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: form.name,
+            code: form.name.substring(0, 3).toUpperCase(),
+            type: typeMap[form.type] || "MISCELLANEOUS",
+            defaultAccountId: form.account ? parseInt(form.account, 10) : null
+          })
+        });
+        navigate("/journals");
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4">
@@ -71,7 +103,7 @@ export default function NewJournal() {
               {showAcDrop && (
                 <div className="absolute left-0 right-0 top-12 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-20 max-h-44 overflow-y-auto">
                   {filtered.length ? filtered.map(a => (
-                    <button key={a} type="button" onMouseDown={() => selectAc(a)} className="w-full text-left px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#CCFBF1]/40 transition-colors">{a}</button>
+                    <button key={a.id} type="button" onMouseDown={() => selectAc(a)} className="w-full text-left px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#CCFBF1]/40 transition-colors">{a.name}</button>
                   )) : <p className="px-4 py-3 text-sm text-[#94A3B8]">No accounts found</p>}
                 </div>
               )}
@@ -82,7 +114,7 @@ export default function NewJournal() {
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#E2E8F0] bg-[#F8FAFC]">
           <button onClick={() => navigate("/journals")} className="px-5 py-2 rounded-full border border-[#E2E8F0] text-sm font-medium text-[#64748B] hover:bg-white transition-colors">Cancel</button>
           <button
-            onClick={() => { if (form.name && form.type) navigate("/journals"); }}
+            onClick={handleSave}
             disabled={!form.name || !form.type}
             className="px-5 py-2 rounded-full bg-[#14B8A6] text-white text-sm font-semibold hover:bg-[#0F766E] transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >

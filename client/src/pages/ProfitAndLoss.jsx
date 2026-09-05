@@ -1,30 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, Printer, Calendar, ChevronDown, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchClient } from "../utils/api";
 
 export default function ProfitAndLoss() {
   const navigate = useNavigate();
   const [year, setYear] = useState("2025");
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [reportData, setReportData] = useState({
+    totalIncome: 0,
+    totalExpense: 0,
+    netIncome: 0,
+    details: { INCOME: [], EXPENSE: [] }
+  });
 
-  const incomeData = {
-    "2025": { sales: 1250000, other: 45000 },
-    "2024": { sales: 1050000, other: 30000 },
-    "2023": { sales: 890000, other: 22000 },
-  };
+  useEffect(() => {
+    // Note: The backend currently doesn't filter by year, but we'll fetch anyway
+    fetchClient('/reports/profit-loss')
+      .then(data => setReportData(data))
+      .catch(console.error);
+  }, [year]);
 
-  const expenseData = {
-    "2025": { purchases: 450000, rent: 120000, utilities: 35000, salaries: 300000, marketing: 85000, other: 25000 },
-    "2024": { purchases: 380000, rent: 110000, utilities: 30000, salaries: 270000, marketing: 65000, other: 20000 },
-    "2023": { purchases: 320000, rent: 100000, utilities: 28000, salaries: 240000, marketing: 50000, other: 18000 },
-  };
-
-  const income = incomeData[year] || incomeData["2025"];
-  const expenses = expenseData[year] || expenseData["2025"];
-
-  const totalIncome = Object.values(income).reduce((a, b) => a + b, 0);
-  const totalExpenses = Object.values(expenses).reduce((a, b) => a + b, 0);
-  const netIncome = totalIncome - totalExpenses;
+  const { totalIncome, totalExpense: totalExpenses, netIncome, details } = reportData;
+  const incomeItems = details.INCOME || [];
+  const expenseItems = details.EXPENSE || [];
 
   const handlePrint = () => {
     window.print();
@@ -35,16 +34,12 @@ export default function ProfitAndLoss() {
       ["Profit and Loss Report", `FY ${year}`],
       ["Account", "Balance (INR)"],
       ["INCOME"],
-      ["Income from Sales", income.sales],
-      ["Other Income", income.other],
+      ["Income Accounts", ""],
+      ...incomeItems.map(i => [i.name, i.balance]),
       ["Total Income", totalIncome],
       ["EXPENSES"],
-      ["Purchase Expense", expenses.purchases],
-      ["Rent Expense", expenses.rent],
-      ["Utilities Expense", expenses.utilities],
-      ["Salaries Expense", expenses.salaries],
-      ["Marketing Expense", expenses.marketing],
-      ["Other Expense", expenses.other],
+      ["Expense Accounts", ""],
+      ...expenseItems.map(e => [e.name, e.balance]),
       ["Total Expenses", totalExpenses],
       ["NET INCOME", netIncome],
     ];
@@ -138,17 +133,17 @@ export default function ProfitAndLoss() {
         </div>
 
         <div className="p-6 flex flex-col gap-8">
-          {/* Income Section */}
           <div className="flex flex-col gap-3">
             <h3 className="font-title-md font-bold text-primary mb-2 border-b border-surface-container-high pb-2">Income</h3>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Income from Sales</span>
-              <span className="font-semibold text-on-surface">₹{income.sales.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Other Income</span>
-              <span className="font-semibold text-on-surface">₹{income.other.toLocaleString("en-IN")}</span>
-            </div>
+            {incomeItems.length === 0 && (
+              <div className="px-4 py-2 text-on-surface-variant text-sm">No posted income entries.</div>
+            )}
+            {incomeItems.map((item, idx) => (
+              <div key={idx} className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
+                <span className="font-body-md text-on-surface">{item.name}</span>
+                <span className="font-semibold text-on-surface">₹{item.balance.toLocaleString("en-IN")}</span>
+              </div>
+            ))}
             <div className="flex justify-between items-center px-4 pt-3 mt-2 border-t border-surface-container-high">
               <span className="font-label-md font-bold text-on-surface-variant uppercase tracking-wider">Total Income</span>
               <span className="font-title-md font-bold text-on-surface">₹{totalIncome.toLocaleString("en-IN")}</span>
@@ -158,30 +153,15 @@ export default function ProfitAndLoss() {
           {/* Expenses Section */}
           <div className="flex flex-col gap-3">
             <h3 className="font-title-md font-bold text-error mb-2 border-b border-surface-container-high pb-2">Expenses</h3>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Purchase Expense</span>
-              <span className="font-semibold text-on-surface">₹{expenses.purchases.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Rent Expense</span>
-              <span className="font-semibold text-on-surface">₹{expenses.rent.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Utilities Expense</span>
-              <span className="font-semibold text-on-surface">₹{expenses.utilities.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Salaries Expense</span>
-              <span className="font-semibold text-on-surface">₹{expenses.salaries.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Marketing Expense</span>
-              <span className="font-semibold text-on-surface">₹{expenses.marketing.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
-              <span className="font-body-md text-on-surface">Other Expense</span>
-              <span className="font-semibold text-on-surface">₹{expenses.other.toLocaleString("en-IN")}</span>
-            </div>
+            {expenseItems.length === 0 && (
+              <div className="px-4 py-2 text-on-surface-variant text-sm">No posted expense entries.</div>
+            )}
+            {expenseItems.map((item, idx) => (
+              <div key={idx} className="flex justify-between items-center px-4 hover:bg-surface-container-low/40 rounded transition-colors py-1">
+                <span className="font-body-md text-on-surface">{item.name}</span>
+                <span className="font-semibold text-on-surface">₹{item.balance.toLocaleString("en-IN")}</span>
+              </div>
+            ))}
             <div className="flex justify-between items-center px-4 pt-3 mt-2 border-t border-surface-container-high">
               <span className="font-label-md font-bold text-on-surface-variant uppercase tracking-wider">Total Expenses</span>
               <span className="font-title-md font-bold text-on-surface">₹{totalExpenses.toLocaleString("en-IN")}</span>

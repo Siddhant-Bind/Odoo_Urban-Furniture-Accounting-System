@@ -1,19 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Search, Filter, Calendar, ChevronDown, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const initialInvoices = [
-  { id: "INV-2025-0001", customer: "Acme Corp", date: "2025-09-01", due: "2025-09-15", total: 45000, status: "Paid" },
-  { id: "INV-2025-0002", customer: "TechNova", date: "2025-09-02", due: "2025-09-16", total: 12000, status: "Confirmed" },
-  { id: "INV-2025-0003", customer: "Global Retail", date: "2025-09-04", due: "2025-09-18", total: 8500, status: "Draft" },
-  { id: "INV-2025-0004", customer: "Jane Doe", date: "2025-09-05", due: "2025-09-19", total: 22000, status: "Confirmed" },
-];
+import { fetchClient } from "../utils/api";
 
 export default function InvoiceRegister() {
   const navigate = useNavigate();
-  const [invoices] = useState(initialInvoices);
+  const [invoices, setInvoices] = useState([]);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetchClient('/sales/invoices').then(data => {
+      setInvoices(data.map(inv => ({
+        id: inv.invoiceNumber,
+        originalId: inv.id,
+        customer: inv.customer?.name || "Unknown",
+        date: new Date(inv.invoiceDate).toISOString().split('T')[0],
+        due: new Date(inv.dueDate).toISOString().split('T')[0],
+        total: parseFloat(inv.totalAmount) || 0,
+        status: inv.status === 'POSTED' ? 'Confirmed' : inv.status === 'DRAFT' ? 'Draft' : 'Paid'
+      })));
+    }).catch(console.error);
+  }, []);
 
   const filteredInvoices = invoices.filter(
     (inv) =>
@@ -25,6 +33,7 @@ export default function InvoiceRegister() {
     Draft: "bg-yellow-100 text-yellow-800",
     Confirmed: "bg-blue-100 text-blue-800",
     Paid: "bg-emerald-100 text-emerald-800",
+    POSTED: "bg-blue-100 text-blue-800"
   };
 
   const getCount = (status) => (status === "All" ? invoices.length : invoices.filter((i) => i.status === status).length);
@@ -112,7 +121,7 @@ export default function InvoiceRegister() {
             </thead>
             <tbody className="divide-y divide-surface-container">
               {filteredInvoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-surface-container-low/40 transition-colors group cursor-pointer" onClick={() => navigate("/customer-invoices")}>
+                <tr key={inv.id} className="hover:bg-surface-container-low/40 transition-colors group cursor-pointer" onClick={() => navigate(`/customer-invoices/new`)}>
                   <td className="px-6 py-4 font-mono text-sm font-semibold text-primary">{inv.id}</td>
                   <td className="px-6 py-4 font-semibold text-on-surface">{inv.customer}</td>
                   <td className="px-6 py-4 text-on-surface-variant text-sm">{inv.date}</td>
@@ -131,7 +140,7 @@ export default function InvoiceRegister() {
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     {inv.status !== "Paid" ? (
                       <button
-                        onClick={() => navigate("/payments/new")}
+                        onClick={() => navigate(`/receipts?invoiceId=${inv.originalId}`)}
                         className="px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container font-label-sm font-semibold hover:bg-primary hover:text-on-primary transition-colors opacity-0 group-hover:opacity-100"
                       >
                         Pay Now

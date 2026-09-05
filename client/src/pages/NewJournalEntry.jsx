@@ -1,10 +1,7 @@
-﻿import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Bell, ChevronDown, Plus, Settings, Trash2, X } from "lucide-react";
-
-const ACCOUNTS = ["Bank A/c", "Cash A/c", "Sales Income A/c", "Purchase Expense A/c", "Debtors A/c", "Creditors A/c", "Capital A/c", "Other Expense A/c"];
-const PARTNERS = ["Acme Corp", "TechLogix", "Global Partners", "Wright Logistics", "Sarah Jenkins", "Marcus Vance"];
-const JOURNALS = ["Sales", "Purchase", "Bank", "Cash"];
+import { fetchClient } from "../utils/api";
 
 const emptyLine = () => ({ id: Date.now() + Math.random(), account: "", partner: "", debit: "", credit: "" });
 
@@ -13,6 +10,21 @@ export default function NewJournalEntry() {
   const [date, setDate] = useState("");
   const [journal, setJournal] = useState("");
   const [lines, setLines] = useState([emptyLine(), emptyLine()]);
+  const [journals, setJournals] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [contacts, setContacts] = useState([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetchClient('/journals'),
+      fetchClient('/accounts'),
+      fetchClient('/contacts')
+    ]).then(([jData, aData, cData]) => {
+      setJournals(jData);
+      setAccounts(aData);
+      setContacts(cData);
+    }).catch(console.error);
+  }, []);
 
   const addLine = () => setLines(l => [...l, emptyLine()]);
   const removeLine = (id) => setLines(l => l.filter(r => r.id !== id));
@@ -71,7 +83,27 @@ export default function NewJournalEntry() {
             <button onClick={() => navigate(-1)} className="px-4 py-2 rounded-full border border-[#E2E8F0] text-sm font-medium text-[#64748B] hover:bg-[#F8FAFC] transition-colors">Back</button>
             <button
               disabled={!balanced || !date || !journal}
-              onClick={() => navigate("/journal-entries")}
+              onClick={async () => {
+                try {
+                  await fetchClient('/journal-entries', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      date,
+                      journalId: parseInt(journal, 10),
+                      reference: `JE-${Date.now()}`,
+                      lines: lines.filter(l => l.account).map(l => ({
+                        accountId: parseInt(l.account, 10),
+                        partnerId: l.partner ? parseInt(l.partner, 10) : null,
+                        debit: parseFloat(l.debit) || 0,
+                        credit: parseFloat(l.credit) || 0
+                      }))
+                    })
+                  });
+                  navigate("/journal-entries");
+                } catch (e) {
+                  alert(e.message);
+                }
+              }}
               className="px-5 py-2 rounded-full bg-[#14B8A6] text-white text-sm font-semibold hover:bg-[#0F766E] transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Post Entry
@@ -100,7 +132,7 @@ export default function NewJournalEntry() {
                   className="w-full h-11 px-4 pr-10 rounded-xl border border-[#E2E8F0] text-sm text-[#0F172A] focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 appearance-none bg-white cursor-pointer transition-all"
                 >
                   <option value="">Select journal...</option>
-                  {JOURNALS.map(j => <option key={j}>{j}</option>)}
+                  {journals.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
                 </select>
                 <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none" />
               </div>
@@ -148,7 +180,7 @@ export default function NewJournalEntry() {
                           className="w-full h-9 px-3 pr-8 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:border-[#14B8A6] focus:outline-none appearance-none bg-white cursor-pointer"
                         >
                           <option value="">Select account...</option>
-                          {ACCOUNTS.map(a => <option key={a}>{a}</option>)}
+                          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </select>
                         <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none" />
                       </div>
@@ -161,7 +193,7 @@ export default function NewJournalEntry() {
                           className="w-full h-9 px-3 pr-8 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:border-[#14B8A6] focus:outline-none appearance-none bg-white cursor-pointer"
                         >
                           <option value="">Select partner...</option>
-                          {PARTNERS.map(p => <option key={p}>{p}</option>)}
+                          {contacts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                         <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none" />
                       </div>

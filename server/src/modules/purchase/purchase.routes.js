@@ -17,6 +17,7 @@ router.post('/orders/:id/confirm', purchaseOrderController.confirmPO);
 // Vendor Bills
 router.post('/bills', vendorBillController.createVendorBill);
 router.get('/bills', vendorBillController.getVendorBills);
+router.get('/bills/:id', vendorBillController.getVendorBillById);
 router.post('/bills/:id/confirm', vendorBillController.confirmVendorBill);
 
 // Payments

@@ -1,18 +1,24 @@
-﻿import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, ChevronDown, LayoutDashboard, LayoutList, Plus, Search, Settings } from "lucide-react";
-
-const SAMPLE_PRODUCTS = [
-  { id: 1, name: "Air Conditioner", category: "Electronics", salesPrice: "₹42,500", cost: "₹31,000", initials: "AC", bg: "bg-teal-50", text: "text-teal-600", border: "border-teal-100" },
-  { id: 2, name: "Refrigerator", category: "Electronics", salesPrice: "₹28,000", cost: "₹19,500", initials: "RF", bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
-  { id: 3, name: "Oak Dining Table", category: "Furniture", salesPrice: "₹18,999", cost: "₹11,000", initials: "OT", bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-100" },
-  { id: 4, name: "Annual Maintenance", category: "Services", salesPrice: "₹5,000", cost: "₹1,200", initials: "AM", bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-100" },
-  { id: 5, name: "LED Smart TV 55\"", category: "Electronics", salesPrice: "₹55,000", cost: "₹39,000", initials: "TV", bg: "bg-sky-50", text: "text-sky-600", border: "border-sky-100" },
-  { id: 6, name: "Office Chair", category: "Furniture", salesPrice: "₹8,500", cost: "₹4,800", initials: "OC", bg: "bg-rose-50", text: "text-rose-600", border: "border-rose-100" },
-];
+import { fetchClient } from "../utils/api";
 
 export default function ProductKanban() {
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchClient('/products')
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
   return (
     <>
       <header className="bg-white border-b border-[#E2E8F0] shadow-sm z-50 fixed w-full top-0 h-16">
@@ -54,7 +60,7 @@ export default function ProductKanban() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-baseline gap-3">
             <h1 className="text-2xl font-bold text-[#0F172A]">Products</h1>
-            <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full text-xs border border-[#E2E8F0]">{SAMPLE_PRODUCTS.length} Products</span>
+            <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full text-xs border border-[#E2E8F0]">{products.length} Products</span>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="rounded-full border-[1.5px] border-[#14B8A6] text-[#0F766E] bg-transparent px-5 py-2 text-sm font-medium hover:bg-[#CCFBF1]/50 transition-colors">Back</button>
@@ -80,26 +86,34 @@ export default function ProductKanban() {
 
         {/* Kanban Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {SAMPLE_PRODUCTS.map((p) => (
+          {loading ? (
+            <p className="col-span-full text-center text-[#64748B] py-10">Loading products...</p>
+          ) : products.map((p) => {
+            const initials = p.name ? p.name.substring(0, 2).toUpperCase() : 'PR';
+            const isService = p.type === 'SERVICE' || p.type === 'Service';
+            const bg = isService ? "bg-purple-50" : "bg-teal-50";
+            const text = isService ? "text-purple-600" : "text-teal-600";
+            const border = isService ? "border-purple-100" : "border-teal-100";
+            return (
             <div key={p.id} className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group cursor-pointer" onClick={() => navigate("/products/new")}>
               {/* Image placeholder */}
-              <div className={`h-40 ${p.bg} ${p.border} border-b flex items-center justify-center`}>
-                <div className={`w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center ${p.text} font-bold text-xl`}>
-                  {p.initials}
+              <div className={`h-40 ${bg} ${border} border-b flex items-center justify-center`}>
+                <div className={`w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center ${text} font-bold text-xl`}>
+                  {initials}
                 </div>
               </div>
               {/* Card body */}
               <div className="p-4">
                 <h3 className="font-semibold text-[#0F172A] text-sm mb-1 truncate">{p.name}</h3>
-                <p className="text-xs text-[#94A3B8] mb-4">{p.category}</p>
+                <p className="text-xs text-[#94A3B8] mb-4">{p.categoryId || 'N/A'}</p>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] text-[#94A3B8] uppercase tracking-wide font-medium">Sales Price</p>
-                    <p className="text-sm font-bold text-[#0F172A]">{p.salesPrice}</p>
+                    <p className="text-sm font-bold text-[#0F172A]">₹{Number(p.salesPrice).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-[#94A3B8] uppercase tracking-wide font-medium">Cost</p>
-                    <p className="text-sm font-semibold text-[#64748B]">{p.cost}</p>
+                    <p className="text-sm font-semibold text-[#64748B]">₹{Number(p.cost).toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-[#F1F5F9] flex justify-end">
@@ -107,7 +121,8 @@ export default function ProductKanban() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Add New Card */}
           <div

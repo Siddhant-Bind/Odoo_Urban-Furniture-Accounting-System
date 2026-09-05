@@ -21,16 +21,20 @@ import NewJournal from './pages/NewJournal';
 import JournalEntries from './pages/JournalEntries';
 import NewJournalEntry from './pages/NewJournalEntry';
 import BudgetForm from './pages/BudgetForm';
+import PurchaseOrderList from './pages/PurchaseOrderList';
 import PurchaseOrderForm from './pages/PurchaseOrderForm';
+import VendorBillList from './pages/VendorBillList';
 import VendorBillForm from './pages/VendorBillForm';
 import BillPaymentForm from './pages/BillPaymentForm';
 import BudgetRevisedForm from './pages/BudgetRevisedForm';
 import BudgetReportList from './pages/BudgetReportList';
 import BudgetReportKanban from './pages/BudgetReportKanban';
 import ForgotPassword from './pages/ForgotPassword';
+import SalesOrderList from './pages/SalesOrderList';
 import SalesOrderForm from './pages/SalesOrderForm';
 import CustomerInvoiceForm from './pages/CustomerInvoiceForm';
 import InvoiceRegister from './pages/InvoiceRegister';
+import InvoicePaymentForm from './pages/InvoicePaymentForm';
 import ProfitAndLoss from './pages/ProfitAndLoss';
 import SalesSheet from './pages/SalesSheet';
 
@@ -96,19 +100,21 @@ export default function App() {
           <Route path="/budget-report/kanban" element={<BudgetReportKanban />} />
 
           {/* Purchase Cycle */}
-          <Route path="/purchase-orders" element={<PurchaseOrderForm />} />
+          <Route path="/purchase-orders" element={<PurchaseOrderList />} />
           <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
-          <Route path="/vendor-bills" element={<VendorBillForm />} />
+          <Route path="/purchase-orders/:id" element={<PurchaseOrderForm />} />
+          <Route path="/vendor-bills" element={<VendorBillList />} />
           <Route path="/vendor-bills/new" element={<VendorBillForm />} />
           <Route path="/payments" element={<BillPaymentForm />} />
           <Route path="/payments/new" element={<BillPaymentForm />} />
 
           {/* Sales Cycle */}
-          <Route path="/sales-orders" element={<SalesOrderForm />} />
+          <Route path="/sales-orders" element={<SalesOrderList />} />
           <Route path="/sales-orders/new" element={<SalesOrderForm />} />
+          <Route path="/sales-orders/:id" element={<SalesOrderForm />} />
           <Route path="/customer-invoices" element={<InvoiceRegister />} />
           <Route path="/customer-invoices/new" element={<CustomerInvoiceForm />} />
-          <Route path="/receipts" element={<Placeholder title="Receipts" />} />
+          <Route path="/receipts" element={<InvoicePaymentForm />} />
 
           {/* Reports */}
           <Route path="/balance-sheet" element={<Placeholder title="Balance Sheet" />} />

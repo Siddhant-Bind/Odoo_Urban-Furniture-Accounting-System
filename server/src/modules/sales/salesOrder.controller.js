@@ -35,9 +35,16 @@ export const createSO = async (req, res, next) => {
 export const getSOs = async (req, res, next) => {
   try {
     const sos = await prisma.salesOrder.findMany({
-      include: { customer: true, lines: true }
+      include: { customer: true, lines: true },
+      orderBy: { id: 'desc' }
     });
-    res.json(sos);
+    // Compute totalAmount from lines and expose flat fields for frontend
+    const result = sos.map(so => ({
+      ...so,
+      totalAmount: so.lines.reduce((sum, l) => sum + Number(l.total), 0),
+      customerName: so.customer?.name || ''
+    }));
+    res.json(result);
   } catch (error) {
     next(error);
   }

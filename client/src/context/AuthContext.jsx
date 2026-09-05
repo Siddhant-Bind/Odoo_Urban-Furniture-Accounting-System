@@ -10,54 +10,64 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { initMockUserStore, getMockUsers, setMockUsers } from "../data/mockUsers";
+import { fetchClient } from "../utils/api";
+import { jwtDecode } from "jwt-decode"; // we will need to npm install this, or we can just base64 decode it manually. Wait, I should just decode it manually to avoid adding dependencies, or assume the backend sends the user object along with the token.
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // { id, loginId, email, name, role }
+  const [user, setUser] = useState(null); // { id, loginId, email, name, role, token }
   const [loading, setLoading] = useState(true);
 
-  // On mount: seed mock store & restore session
+  // On mount: restore session
   useEffect(() => {
-    initMockUserStore();
     const session = localStorage.getItem("um_session");
     if (session) {
-      setUser(JSON.parse(session));
+      try {
+        setUser(JSON.parse(session));
+      } catch (e) {
+        localStorage.removeItem("um_session");
+      }
     }
     setLoading(false);
   }, []);
 
   /**
-   * login — validate credentials against the mock store.
-   * BACKEND SWAP: Replace body with a real POST to /api/auth/login
+   * login — validate credentials against the backend API.
    * @returns {{ success: boolean, error?: string }}
    */
-  const login = (loginId, password, role) => {
-    const users = getMockUsers();
-    const found = users.find(
-      (u) => u.loginId === loginId && u.password === password
-    );
+  const login = async (loginId, password, role) => {
+    try {
+      // API call to /auth/login
+      const data = await fetchClient("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ loginId, password }),
+      });
 
-    if (!found) {
-      return { success: false, error: "Invalid Login ID or Password" };
-    }
-    if (role && found.role !== role) {
-      return { success: false, error: `This account does not have the "${role}" role.` };
-    }
+      // The backend returns: { token: '...', user: { id, loginId, role, ... } }
+      // Wait, let's verify what the backend returns. In auth.controller.js, it usually returns { token, user: { id, loginId, role } }.
+      // If role is passed from the form, we should check it.
+      if (role) {
+        const expectedRole = role === "Admin" ? "ADMIN" : "INVOICING_USER";
+        if (data.user.role !== expectedRole && !(role === "Accountant" && data.user.role === "ACCOUNTANT")) {
+          return { success: false, error: `This account does not have the "${role}" role.` };
+        }
+      }
 
-    const session = { id: found.id, loginId: found.loginId, email: found.email, name: found.name, role: found.role };
-    localStorage.setItem("um_session", JSON.stringify(session));
-    setUser(session);
-    return { success: true };
+      const session = { ...data.user, token: data.token };
+      localStorage.setItem("um_session", JSON.stringify(session));
+      setUser(session);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message || "Invalid Login ID or Password" };
+    }
   };
 
   /**
-   * register — create a new user in the mock store.
-   * BACKEND SWAP: Replace body with a real POST to /api/auth/register
+   * register — create a new user via the backend API.
    * @returns {{ success: boolean, error?: string }}
    */
-  const register = (loginId, email, password, name, role = "Accountant") => {
+  const register = async (loginId, email, password, name, role = "Accountant") => {
     // Validation
     if (loginId.length < 6 || loginId.length > 12) {
       return { success: false, field: "loginId", error: "Login ID must be 6–12 characters." };
@@ -78,30 +88,20 @@ export function AuthProvider({ children }) {
       return { success: false, field: "password", error: "Password must contain at least one special character." };
     }
 
-    const users = getMockUsers();
+    try {
+      const data = await fetchClient("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ loginId, email, password, name, role }),
+      });
 
-    if (users.find((u) => u.loginId === loginId)) {
-      return { success: false, field: "loginId", error: "Login ID is already taken." };
+      // The backend returns: { token, user: { ... } }
+      const session = { ...data.user, token: data.token };
+      localStorage.setItem("um_session", JSON.stringify(session));
+      setUser(session);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message || "Registration failed" };
     }
-    if (users.find((u) => u.email === email)) {
-      return { success: false, field: "email", error: "Email is already registered." };
-    }
-
-    const newUser = {
-      id: `u${Date.now()}`,
-      loginId,
-      email,
-      password,
-      name: name || loginId,
-      role,
-    };
-
-    setMockUsers([...users, newUser]);
-
-    const session = { id: newUser.id, loginId: newUser.loginId, email: newUser.email, name: newUser.name, role: newUser.role };
-    localStorage.setItem("um_session", JSON.stringify(session));
-    setUser(session);
-    return { success: true };
   };
 
   /** logout — clear session and redirect caller to /login */

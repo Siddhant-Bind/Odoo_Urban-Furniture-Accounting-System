@@ -1,19 +1,29 @@
-﻿import React from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Bell, ChevronDown, ChevronRight, LayoutDashboard,
   LayoutList, MoreVertical, Plus, Search, Settings,
 } from "lucide-react";
 
-const SAMPLE_PRODUCTS = [
-  { id: 1, name: "Air Conditioner", category: "Electronics", type: "Goods", salesPrice: "₹42,500", cost: "₹31,000", initials: "AC", color: "bg-teal-100 text-teal-700" },
-  { id: 2, name: "Refrigerator", category: "Electronics", type: "Goods", salesPrice: "₹28,000", cost: "₹19,500", initials: "RF", color: "bg-blue-100 text-blue-700" },
-  { id: 3, name: "Oak Dining Table", category: "Furniture", type: "Goods", salesPrice: "₹18,999", cost: "₹11,000", initials: "OT", color: "bg-amber-100 text-amber-700" },
-  { id: 4, name: "Annual Maintenance", category: "Services", type: "Service", salesPrice: "₹5,000", cost: "₹1,200", initials: "AM", color: "bg-purple-100 text-purple-700" },
-];
+import { fetchClient } from "../utils/api";
 
 export default function ProductList() {
   const navigate = useNavigate();
+  const [products, setProducts] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetchClient('/products')
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <>
       <header className="bg-white border-b border-[#E2E8F0] shadow-sm z-50 fixed w-full top-0 h-16">
@@ -55,7 +65,7 @@ export default function ProductList() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-baseline gap-3">
             <h1 className="text-2xl font-bold text-[#0F172A]">Products</h1>
-            <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full text-xs border border-[#E2E8F0]">{SAMPLE_PRODUCTS.length} Products</span>
+            <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full text-xs border border-[#E2E8F0]">{products.length} Products</span>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="rounded-full border-[1.5px] border-[#14B8A6] text-[#0F766E] bg-transparent px-5 py-2 text-sm font-medium hover:bg-[#CCFBF1]/50 transition-colors">Back</button>
@@ -95,31 +105,39 @@ export default function ProductList() {
                 </tr>
               </thead>
               <tbody className="text-sm divide-y divide-[#E2E8F0]">
-                {SAMPLE_PRODUCTS.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#CCFBF1]/20 transition-colors group">
-                    <td className="p-4 text-center"><input type="checkbox" className="w-[18px] h-[18px] rounded border-[#CBD5E1] cursor-pointer" /></td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-lg ${p.color} flex items-center justify-center font-bold text-xs flex-shrink-0`}>{p.initials}</div>
-                        <span className="font-semibold text-[#0F172A]">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-[#64748B]">{p.category}</td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${p.type === "Service" ? "bg-purple-100 text-purple-700" : "bg-[#CCFBF1] text-[#0F766E]"}`}>{p.type}</span>
-                    </td>
-                    <td className="p-4 font-semibold text-[#0F172A]">{p.salesPrice}</td>
-                    <td className="p-4 text-[#64748B]">{p.cost}</td>
-                    <td className="p-4 text-center">
-                      <button className="p-1 rounded-full hover:bg-[#E2E8F0] opacity-0 group-hover:opacity-100 transition-all"><MoreVertical size={15} className="text-[#64748B]" /></button>
-                    </td>
-                  </tr>
-                ))}
+                {loading ? (
+                  <tr><td colSpan="7" className="p-4 text-center text-[#64748B]">Loading products...</td></tr>
+                ) : products.map((p) => {
+                  const initials = p.name ? p.name.substring(0, 2).toUpperCase() : 'PR';
+                  const isService = p.type === "SERVICE" || p.type === "Service";
+                  const color = isService ? "bg-purple-100 text-purple-700" : "bg-[#CCFBF1] text-[#0F766E]";
+                  
+                  return (
+                    <tr key={p.id} className="hover:bg-[#CCFBF1]/20 transition-colors group">
+                      <td className="p-4 text-center"><input type="checkbox" className="w-[18px] h-[18px] rounded border-[#CBD5E1] cursor-pointer" /></td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-lg ${color} flex items-center justify-center font-bold text-xs flex-shrink-0`}>{initials}</div>
+                          <span className="font-semibold text-[#0F172A]">{p.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-[#64748B]">{p.categoryId || 'N/A'}</td>
+                      <td className="p-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${isService ? "bg-purple-100 text-purple-700" : "bg-[#CCFBF1] text-[#0F766E]"}`}>{p.type}</span>
+                      </td>
+                      <td className="p-4 font-semibold text-[#0F172A]">₹{Number(p.salesPrice).toLocaleString()}</td>
+                      <td className="p-4 text-[#64748B]">₹{Number(p.cost).toLocaleString()}</td>
+                      <td className="p-4 text-center">
+                        <button className="p-1 rounded-full hover:bg-[#E2E8F0] opacity-0 group-hover:opacity-100 transition-all"><MoreVertical size={15} className="text-[#64748B]" /></button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
           <div className="border-t border-[#E2E8F0] p-4 flex items-center justify-between text-sm text-[#64748B]">
-            <span>Showing 1–{SAMPLE_PRODUCTS.length} of {SAMPLE_PRODUCTS.length} products</span>
+            <span>Showing 1–{products.length} of {products.length} products</span>
             <div className="flex items-center gap-2">
               <button className="w-8 h-8 rounded-full border border-[#E2E8F0] flex items-center justify-center hover:bg-[#F1F5F9] disabled:opacity-40" disabled><ArrowLeft size={14} /></button>
               <button className="w-8 h-8 rounded-full bg-[#14B8A6] text-white font-semibold text-xs flex items-center justify-center">1</button>

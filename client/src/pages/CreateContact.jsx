@@ -6,6 +6,29 @@ import { ArrowLeft, BadgeCheck, CheckCircle, ChevronDown, IdCard, Lock, Mail, Pl
 export default function CreateContact() {
   const navigate = useNavigate();
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      name: formData.get("full_name") || "",
+      email: formData.get("email") || "",
+      phone: formData.get("phone") || "",
+      companyName: formData.get("company") || "",
+      isVendor: formData.get("role") === "vendor" || formData.get("role") === "both",
+      isCustomer: formData.get("role") === "customer" || formData.get("role") === "both",
+    };
+    try {
+      const { fetchClient } = await import('../utils/api');
+      await fetchClient('/contacts', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      navigate("/contacts/list");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <>
       <header className="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -171,8 +194,8 @@ export default function CreateContact() {
               <button
                 className="inline-flex items-center gap-space-xs px-space-lg py-space-sm rounded-full bg-primary-container hover:bg-primary text-on-primary font-body-md text-body-md font-semibold transition-all shadow-md active:scale-95"
                 id="save-contact-btn"
-                type="button"
-                onClick={() => navigate("/contacts/list")}
+                type="submit"
+                form="contact-form"
               >
                 <CheckCircle className="text-[18px]" />
                 <span>Save Contact</span>
@@ -183,7 +206,7 @@ export default function CreateContact() {
           <form
             className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start"
             id="contact-form"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={handleSubmit}
           >
             {/*  Left / Center Column (8 Cols - 2/3)  */}
             <div className="lg:col-span-8 flex flex-col gap-space-xl">
@@ -711,8 +734,8 @@ export default function CreateContact() {
               </button>
               <button
                 className="flex-1 py-space-sm rounded-full bg-primary-container text-on-primary font-body-md text-body-md font-semibold text-center shadow-md"
-                type="button"
-                onClick={() => navigate("/contacts/list")}
+                type="submit"
+                form="contact-form"
               >
                 Save Contact
               </button>

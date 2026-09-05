@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, ChevronDown, Kanban, List, Printer, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchClient } from "../utils/api";
 
 // Helper component for large donut chart
 const LargeDonut = ({ percent, color = "#14B8A6" }) => {
@@ -44,6 +45,13 @@ const LargeDonut = ({ percent, color = "#14B8A6" }) => {
 
 export default function BudgetReportKanban() {
   const navigate = useNavigate();
+  const [budgets, setBudgets] = useState([]);
+
+  useEffect(() => {
+    fetchClient('/budgets').then(data => {
+      setBudgets(data);
+    }).catch(console.error);
+  }, []);
 
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen relative overflow-x-hidden flex flex-col">
@@ -107,122 +115,57 @@ export default function BudgetReportKanban() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           
-          {/* Card 1 */}
-          <div 
-            onClick={() => navigate("/analytical-budget/new")}
-            className="bg-surface-container-lowest rounded-2xl shadow-sm border border-surface-container p-6 hover:shadow-md hover:border-surface-container-high transition-all cursor-pointer group flex flex-col"
-          >
-            <div className="flex justify-between items-start mb-4">
-               <div>
-                 <h3 className="font-label-lg font-bold text-on-surface group-hover:text-primary transition-colors">
-                   Q1 Operational Budget
-                 </h3>
-                 <p className="font-body-sm text-on-surface-variant mt-1">Jan 01 - Mar 31, 2025</p>
-               </div>
-               <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                 Confirmed
-               </span>
-            </div>
-            
-            <div className="flex-1 flex flex-col items-center justify-center py-4">
-              <LargeDonut percent={85} />
-            </div>
-            
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-surface-container">
-               <div className="flex-1 flex flex-col">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Achieved</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$42,500</span>
-               </div>
-               <div className="w-px h-8 bg-surface-container mx-1"></div>
-               <div className="flex-1 flex flex-col text-center">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Budget</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$50,000</span>
-               </div>
-               <div className="w-px h-8 bg-surface-container mx-1"></div>
-               <div className="flex-1 flex flex-col text-right">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Committed</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$50,000</span>
-               </div>
-            </div>
-          </div>
+          {budgets.map(budget => {
+            const committed = parseFloat(budget.committedAmount) || 0;
+            const achieved = parseFloat(budget.achievedAmount) || 0;
+            const pct = committed > 0 ? (achieved / committed) * 100 : 0;
+            const statusClass = budget.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-800' :
+                                budget.status === 'REVISED' ? 'bg-blue-100 text-blue-800' :
+                                'bg-yellow-100 text-yellow-800';
 
-          {/* Card 2 */}
-          <div 
-            onClick={() => navigate("/analytical-budget/revised")}
-            className="bg-surface-container-lowest rounded-2xl shadow-sm border border-surface-container p-6 hover:shadow-md hover:border-surface-container-high transition-all cursor-pointer group flex flex-col"
-          >
-            <div className="flex justify-between items-start mb-4">
-               <div>
-                 <h3 className="font-label-lg font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-1">
-                   Q2 Marketing Budget - Revised
-                 </h3>
-                 <p className="font-body-sm text-on-surface-variant mt-1">Apr 01 - Jun 30, 2025</p>
-               </div>
-               <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 shrink-0 ml-2">
-                 Revised
-               </span>
-            </div>
-            
-            <div className="flex-1 flex flex-col items-center justify-center py-4">
-              <LargeDonut percent={42} />
-            </div>
-            
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-surface-container">
-               <div className="flex-1 flex flex-col">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Achieved</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$73,500</span>
-               </div>
-               <div className="w-px h-8 bg-surface-container mx-1"></div>
-               <div className="flex-1 flex flex-col text-center">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Budget</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$175,000</span>
-               </div>
-               <div className="w-px h-8 bg-surface-container mx-1"></div>
-               <div className="flex-1 flex flex-col text-right">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Committed</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$175,000</span>
-               </div>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div 
-            onClick={() => navigate("/analytical-budget/new")}
-            className="bg-surface-container-lowest rounded-2xl shadow-sm border border-surface-container p-6 hover:shadow-md hover:border-surface-container-high transition-all cursor-pointer group flex flex-col"
-          >
-            <div className="flex justify-between items-start mb-4">
-               <div>
-                 <h3 className="font-label-lg font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-1">
-                   Annual R&D Allocation
-                 </h3>
-                 <p className="font-body-sm text-on-surface-variant mt-1">Jan 01 - Dec 31, 2025</p>
-               </div>
-               <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-800 shrink-0 ml-2">
-                 Draft
-               </span>
-            </div>
-            
-            <div className="flex-1 flex flex-col items-center justify-center py-4">
-              <LargeDonut percent={15} />
-            </div>
-            
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-surface-container">
-               <div className="flex-1 flex flex-col">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Achieved</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$30,000</span>
-               </div>
-               <div className="w-px h-8 bg-surface-container mx-1"></div>
-               <div className="flex-1 flex flex-col text-center">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Budget</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$200,000</span>
-               </div>
-               <div className="w-px h-8 bg-surface-container mx-1"></div>
-               <div className="flex-1 flex flex-col text-right">
-                 <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Committed</span>
-                 <span className="font-numeric-md font-bold text-on-surface mt-1">$200,000</span>
-               </div>
-            </div>
-          </div>
+            return (
+              <div 
+                key={budget.id}
+                onClick={() => navigate("/analytical-budget/new")}
+                className="bg-surface-container-lowest rounded-2xl shadow-sm border border-surface-container p-6 hover:shadow-md hover:border-surface-container-high transition-all cursor-pointer group flex flex-col"
+              >
+                <div className="flex justify-between items-start mb-4">
+                   <div>
+                     <h3 className="font-label-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                       {budget.budgetName}
+                     </h3>
+                     <p className="font-body-sm text-on-surface-variant mt-1">
+                       {new Date(budget.periodStart).toLocaleDateString()} - {new Date(budget.periodEnd).toLocaleDateString()}
+                     </p>
+                   </div>
+                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusClass}`}>
+                     {budget.status}
+                   </span>
+                </div>
+                
+                <div className="flex-1 flex flex-col items-center justify-center py-4">
+                  <LargeDonut percent={pct.toFixed(0)} />
+                </div>
+                
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-surface-container">
+                   <div className="flex-1 flex flex-col">
+                     <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Achieved</span>
+                     <span className="font-numeric-md font-bold text-on-surface mt-1">₹{achieved.toLocaleString("en-IN")}</span>
+                   </div>
+                   <div className="w-px h-8 bg-surface-container mx-1"></div>
+                   <div className="flex-1 flex flex-col text-center">
+                     <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Budget</span>
+                     <span className="font-numeric-md font-bold text-on-surface mt-1">₹{committed.toLocaleString("en-IN")}</span>
+                   </div>
+                   <div className="w-px h-8 bg-surface-container mx-1"></div>
+                   <div className="flex-1 flex flex-col text-right">
+                     <span className="font-label-sm text-on-surface-variant text-[11px] uppercase tracking-wider">Committed</span>
+                     <span className="font-numeric-md font-bold text-on-surface mt-1">₹{committed.toLocaleString("en-IN")}</span>
+                   </div>
+                </div>
+              </div>
+            );
+          })}
 
         </div>
 

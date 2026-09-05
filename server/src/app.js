@@ -14,7 +14,23 @@ import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5000',
+  'https://b82wq2xh-5000.inc1.devtunnels.ms',
+  'http://localhost:5173', // Include Vite dev server port as well for local testing
+  'https://b82wq2xh-5173.inc1.devtunnels.ms'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.devtunnels.ms')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static('src/uploads'));
 

@@ -1,27 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, Check, X, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchClient } from "../utils/api";
 
 export default function BudgetForm() {
   const navigate = useNavigate();
 
-  const [status, setStatus] = useState("Draft"); // Draft | Confirmed | Revised | Cancelled
+  const [status, setStatus] = useState("Draft");
+  const [budgetName, setBudgetName] = useState("");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [responsiblePersonId, setResponsiblePersonId] = useState("");
   const [items, setItems] = useState([
     {
-      id: 1,
-      account: "Marketing - Online Ads",
-      type: "Expense",
-      committed: 50000,
+      id: Date.now(),
+      account: "",
+      committed: 0,
       achieved: 0,
-    },
-    {
-      id: 2,
-      account: "Sales - Software Licenses",
-      type: "Income",
-      committed: 120000,
-      achieved: 0,
-    },
+    }
   ]);
+  
+  const [users, setUsers] = useState([]);
+  const [analyticAccounts, setAnalyticAccounts] = useState([]);
+
+  useEffect(() => {
+    // In a real app we would fetch users for 'Responsible Person'
+    // But since we only have Contacts / Users, we'll fetch /contacts and map them.
+    // We'll also fetch analytic accounts
+    fetchClient('/budgets/analytic-accounts').then(setAnalyticAccounts).catch(console.error);
+    // MOCK users for now as there is no GET /users route exposed
+    setUsers([{ id: 1, name: "Admin User" }, { id: 2, name: "Test User" }]);
+  }, []);
 
   const handleAddLine = () => {
     setItems((prev) => [
@@ -29,7 +38,6 @@ export default function BudgetForm() {
       {
         id: Date.now(),
         account: "",
-        type: "Expense",
         committed: 0,
         achieved: 0,
       },
@@ -49,6 +57,34 @@ export default function BudgetForm() {
         return item;
       })
     );
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!budgetName || !periodStart || !periodEnd || !responsiblePersonId) {
+        alert("Please fill all top-level budget details.");
+        return;
+      }
+      
+      const promises = items.filter(i => i.account).map(item => {
+        return fetchClient('/budgets', {
+          method: 'POST',
+          body: JSON.stringify({
+            budgetName,
+            periodStart,
+            periodEnd,
+            responsiblePersonId: parseInt(responsiblePersonId, 10),
+            analyticAccountId: parseInt(item.account, 10),
+            committedAmount: parseFloat(item.committed) || 0
+          })
+        });
+      });
+
+      await Promise.all(promises);
+      navigate("/budget-report");
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   return (
@@ -76,14 +112,14 @@ export default function BudgetForm() {
             New
           </button>
           <button
-            onClick={() => setStatus("Confirmed")}
+            onClick={handleSave}
             className={`px-4 py-2 rounded-full font-label-md font-semibold transition-colors shadow-sm cursor-pointer ${
               status === "Confirmed"
                 ? "bg-emerald-600 text-white"
                 : "bg-surface-container-high text-on-surface hover:bg-surface-container"
             }`}
           >
-            Confirm
+            Save
           </button>
           <button
             onClick={() => navigate("/analytical-budget/revised")}
@@ -179,6 +215,8 @@ export default function BudgetForm() {
               </label>
               <input
                 type="text"
+                value={budgetName}
+                onChange={e => setBudgetName(e.target.value)}
                 placeholder="e.g. Q2 Marketing Budget"
                 className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all outline-none"
               />
@@ -187,10 +225,9 @@ export default function BudgetForm() {
               <label className="font-label-md font-bold text-on-surface">
                 Responsible
               </label>
-              <select className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all outline-none">
-                <option value="">Select a Contact...</option>
-                <option value="1">Alex Morgan</option>
-                <option value="2">Sarah Jenkins</option>
+              <select value={responsiblePersonId} onChange={e => setResponsiblePersonId(e.target.value)} className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all outline-none">
+                <option value="">Select a User...</option>
+                {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-2 md:col-span-2">
@@ -200,11 +237,15 @@ export default function BudgetForm() {
               <div className="flex items-center gap-4">
                 <input
                   type="date"
+                  value={periodStart}
+                  onChange={e => setPeriodStart(e.target.value)}
                   className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all outline-none"
                 />
                 <span className="text-on-surface-variant font-bold">to</span>
                 <input
                   type="date"
+                  value={periodEnd}
+                  onChange={e => setPeriodEnd(e.target.value)}
                   className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all outline-none"
                 />
               </div>
@@ -225,9 +266,6 @@ export default function BudgetForm() {
                 <tr className="bg-surface-container-low">
                   <th className="px-6 py-4 font-label-md font-bold text-on-surface-variant border-b border-surface-container">
                     Analytic Account
-                  </th>
-                  <th className="px-6 py-4 font-label-md font-bold text-on-surface-variant border-b border-surface-container">
-                    Type
                   </th>
                   <th className="px-6 py-4 font-label-md font-bold text-on-surface-variant border-b border-surface-container text-right">
                     Committed Amount
@@ -254,22 +292,13 @@ export default function BudgetForm() {
                   return (
                     <tr key={item.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4 text-on-surface font-medium">
-                        <input
-                          type="text"
+                        <select
                           value={item.account}
-                          placeholder="Account name..."
                           onChange={(e) => handleItemChange(item.id, "account", e.target.value)}
                           className="bg-transparent border-b border-transparent focus:border-primary outline-none w-full"
-                        />
-                      </td>
-                      <td className="px-6 py-4 text-on-surface">
-                        <select
-                          value={item.type}
-                          onChange={(e) => handleItemChange(item.id, "type", e.target.value)}
-                          className="bg-transparent font-semibold border-none outline-none cursor-pointer"
                         >
-                          <option value="Expense">Expense</option>
-                          <option value="Income">Income</option>
+                          <option value="">Select Account...</option>
+                          {analyticAccounts.map(a => <option key={a.id} value={a.id}>{a.name} ({a.type})</option>)}
                         </select>
                       </td>
                       <td className="px-6 py-4 text-on-surface text-right">

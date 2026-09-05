@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { BarChart3, Briefcase, CheckCircle, ChevronDown, ChevronRight, Clock, Filter, Kanban, Landmark, LayoutGrid, List, Lock, LogOut, PieChart, Plus, Receipt, RefreshCw, Search, Shield, ShieldCheck, ShoppingBag, Truck, User, Wallet } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { fetchClient } from "../utils/api";
 
 
 export default function Dashboard() {
@@ -18,6 +19,30 @@ export default function Dashboard() {
     report: false,
   });
 
+  const [salesOrders, setSalesOrders] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [journalEntries, setJournalEntries] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetchClient('/sales/orders').catch(() => []),
+      fetchClient('/purchase/orders').catch(() => []),
+      fetchClient('/accounts').catch(() => []),
+      fetchClient('/journal-entries').catch(() => []),
+      fetchClient('/budgets').catch(() => [])
+    ]).then(([sales, purchase, accs, entries, budgs]) => {
+      setSalesOrders(sales);
+      setPurchaseOrders(purchase);
+      setAccounts(accs);
+      setJournalEntries(entries);
+      setBudgets(budgs);
+      setLoading(false);
+    });
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -26,6 +51,18 @@ export default function Dashboard() {
   const toggleSection = (key) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const salesTotal = salesOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+  const salesDraftCount = salesOrders.filter(o => o.status === 'DRAFT').length;
+  const salesConfirmedCount = salesOrders.filter(o => o.status !== 'DRAFT').length;
+
+  const purchaseTotal = purchaseOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+  const purchaseDraftCount = purchaseOrders.filter(o => o.status === 'DRAFT').length;
+  const purchaseConfirmedCount = purchaseOrders.filter(o => o.status !== 'DRAFT').length;
+
+  const bankAccount = accounts.find(a => a.accountType === 'BANK' || a.accountName?.toLowerCase().includes('bank')) || { balance: 0, accountName: 'Bank A/c' };
+  const cashAccount = accounts.find(a => a.accountType === 'CASH' || a.accountName?.toLowerCase().includes('cash')) || { balance: 0, accountName: 'Cash Float' };
+  const pendingEntries = journalEntries.filter(e => e.status === 'DRAFT').length;
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen relative overflow-x-hidden flex flex-col">
@@ -242,7 +279,7 @@ export default function Dashboard() {
                             Pipeline Volume
                           </span>
                           <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
-                            $42,850.00
+                            ${salesTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </div>
                         </div>
                         {/*  Segmented Status Badges  */}
@@ -251,63 +288,41 @@ export default function Dashboard() {
                             className="px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"
                             type="button"
                           >
-                            All (3)
+                            All ({salesOrders.length})
                           </button>
                           <button
                             className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
                             type="button"
                           >
-                            Confirmed (0)
+                            Confirmed ({salesConfirmedCount})
                           </button>
                           <button
                             className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
                             type="button"
                           >
-                            Draft (3)
+                            Draft ({salesDraftCount})
                           </button>
                         </div>
                       </div>
                       {/*  Micro Record Rows  */}
                       <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
-                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                              SO-1004 • Acme Retail
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">
-                              $14,200.00
-                            </span>
-                          </div>
-                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                            Draft
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                              SO-1003 • Horizon Goods
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">
-                              $18,450.00
+                        {loading ? (
+                          <div className="text-center text-on-surface-variant text-sm">Loading...</div>
+                        ) : salesOrders.slice(0, 3).map(order => (
+                          <div key={order.id} className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                                {order.orderNumber} • {order.customerName}
+                              </span>
+                              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                                ${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                              </span>
+                            </div>
+                            <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                              {order.status}
                             </span>
                           </div>
-                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                            Draft
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                              SO-1002 • Pacific Mart Ltd
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">
-                              $10,200.00
-                            </span>
-                          </div>
-                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                            Draft
-                          </span>
-                        </div>
+                        ))}
                       </div>
                     </div>
                     {/*  CARD 2: Purchase Summary  */}
@@ -335,7 +350,7 @@ export default function Dashboard() {
                             Payable Committed
                           </span>
                           <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
-                            $28,400.00
+                            ${purchaseTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </div>
                         </div>
                         {/*  Segmented Status Badges  */}
@@ -344,63 +359,41 @@ export default function Dashboard() {
                             className="px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"
                             type="button"
                           >
-                            All (3)
+                            All ({purchaseOrders.length})
                           </button>
                           <button
                             className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
                             type="button"
                           >
-                            Confirmed (0)
+                            Confirmed ({purchaseConfirmedCount})
                           </button>
                           <button
                             className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
                             type="button"
                           >
-                            Draft (2)
+                            Draft ({purchaseDraftCount})
                           </button>
                         </div>
                       </div>
                       {/*  Micro Record Rows  */}
                       <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
-                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                              PO-2009 • Global Logistics
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">
-                              $12,500.00
-                            </span>
-                          </div>
-                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                            Draft
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                              PO-2008 • Apex Supply
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">
-                              $8,900.00
+                        {loading ? (
+                          <div className="text-center text-on-surface-variant text-sm">Loading...</div>
+                        ) : purchaseOrders.slice(0, 3).map(order => (
+                          <div key={order.id} className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                                {order.orderNumber} • {order.vendorName}
+                              </span>
+                              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                                ${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                              </span>
+                            </div>
+                            <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                              {order.status}
                             </span>
                           </div>
-                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                            Draft
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                              PO-2007 • Delta Mfg
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface-variant">
-                              $7,000.00
-                            </span>
-                          </div>
-                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                            Draft
-                          </span>
-                        </div>
+                        ))}
                       </div>
                     </div>
                     {/*  CARD 3: Budget Reports  */}
@@ -530,7 +523,7 @@ export default function Dashboard() {
                           Available Cash Float
                         </span>
                         <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                          $184,920.45
+                          ${Number(bankAccount.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                         </span>
                         <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
                           <CheckCircle className="text-[14px]" />
@@ -542,7 +535,7 @@ export default function Dashboard() {
                           Pending Reconciliations
                         </span>
                         <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                          14 Entries
+                          {pendingEntries} Entries
                         </span>
                         <span className="font-body-sm text-body-sm text-on-surface-variant inline-flex items-center gap-space-2xs">
                           <Clock className="text-[14px]" />
@@ -574,34 +567,22 @@ export default function Dashboard() {
                         Sales Orders
                       </span>
                       <span className="px-space-xs py-0.5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold">
-                        3 Cards
+                        {salesOrders.length} Cards
                       </span>
                     </div>
                     <div className="flex flex-col gap-space-sm">
-                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">SO-1004</span>
-                          <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">Draft</span>
+                      {loading ? (
+                        <div className="text-center text-sm py-4">Loading...</div>
+                      ) : salesOrders.slice(0, 5).map(order => (
+                        <div key={order.id} className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                          <div className="flex items-center justify-between">
+                            <span className="font-label-md text-label-md font-bold text-on-surface">{order.orderNumber}</span>
+                            <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">{order.status}</span>
+                          </div>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">{order.customerName}</p>
+                          <div className="mt-space-xs font-numeric-md font-bold text-primary">${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Acme Retail</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-primary">$14,200.00</div>
-                      </div>
-                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">SO-1003</span>
-                          <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">Draft</span>
-                        </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Horizon Goods</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-primary">$18,450.00</div>
-                      </div>
-                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">SO-1002</span>
-                          <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">Draft</span>
-                        </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Pacific Mart Ltd</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-primary">$10,200.00</div>
-                      </div>
+                      ))}
                     </div>
                   </div>
 
@@ -612,34 +593,22 @@ export default function Dashboard() {
                         Purchase Orders
                       </span>
                       <span className="px-space-xs py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
-                        3 Cards
+                        {purchaseOrders.length} Cards
                       </span>
                     </div>
                     <div className="flex flex-col gap-space-sm">
-                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">PO-2009</span>
-                          <span className="px-space-xs py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm">Pending</span>
+                      {loading ? (
+                        <div className="text-center text-sm py-4">Loading...</div>
+                      ) : purchaseOrders.slice(0, 5).map(order => (
+                        <div key={order.id} className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                          <div className="flex items-center justify-between">
+                            <span className="font-label-md text-label-md font-bold text-on-surface">{order.orderNumber}</span>
+                            <span className="px-space-xs py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm">{order.status}</span>
+                          </div>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">{order.vendorName}</p>
+                          <div className="mt-space-xs font-numeric-md font-bold text-secondary">${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Global Logistics</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-secondary">$12,500.00</div>
-                      </div>
-                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">PO-2008</span>
-                          <span className="px-space-xs py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm">Pending</span>
-                        </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Apex Supply</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-secondary">$8,900.00</div>
-                      </div>
-                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">PO-2007</span>
-                          <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Confirmed</span>
-                        </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Delta Mfg</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-secondary">$7,000.00</div>
-                      </div>
+                      ))}
                     </div>
                   </div>
 
@@ -656,19 +625,19 @@ export default function Dashboard() {
                     <div className="flex flex-col gap-space-sm">
                       <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
                         <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">Bank A/c</span>
+                          <span className="font-label-md text-label-md font-bold text-on-surface">{bankAccount.accountName}</span>
                           <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Synced</span>
                         </div>
                         <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Primary Operating Account</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">$184,920.45</div>
+                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">${Number(bankAccount.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                       </div>
                       <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
                         <div className="flex items-center justify-between">
-                          <span className="font-label-md text-label-md font-bold text-on-surface">Cash Float</span>
+                          <span className="font-label-md text-label-md font-bold text-on-surface">{cashAccount.accountName}</span>
                           <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Active</span>
                         </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Petty Cash Petty Vault</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">$12,400.00</div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Petty Cash / Vault</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">${Number(cashAccount.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                       </div>
                     </div>
                   </div>

@@ -1,22 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, Download, Calendar, ChevronDown, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const initialSales = [
-  { id: "S00001", date: "2025-09-01", customer: "Acme Corp", product: "Air Conditioner", qty: 2, amount: 70000, status: "Invoiced", period: "This Month" },
-  { id: "S00002", date: "2025-09-02", customer: "TechNova", product: "Refrigerator", qty: 1, amount: 22000, status: "Confirmed", period: "This Month" },
-  { id: "S00003", date: "2025-09-04", customer: "Global Retail", product: "Washing Machine", qty: 3, amount: 54000, status: "Cancelled", period: "This Month" },
-  { id: "S00004", date: "2025-09-05", customer: "Jane Doe", product: "LED TV", qty: 1, amount: 45000, status: "Invoiced", period: "This Month" },
-  { id: "S00005", date: "2025-08-15", customer: "Home Furnishings Inc", product: "Office Chair", qty: 5, amount: 40000, status: "Invoiced", period: "Last Month" },
-  { id: "S00006", date: "2025-08-20", customer: "Acme Corp", product: "LED TV", qty: 2, amount: 90000, status: "Confirmed", period: "Last Month" },
-];
+import { fetchClient } from "../utils/api";
 
 export default function SalesSheet() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState("This Month");
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
+  const [sales, setSales] = useState([]);
 
-  const filteredSales = initialSales.filter((s) => period === "All Time" || s.period === period);
+  useEffect(() => {
+    Promise.all([
+      fetchClient('/sales/orders'),
+      fetchClient('/products')
+    ]).then(([ordersData, productsData]) => {
+      const prodMap = productsData.reduce((acc, p) => ({ ...acc, [p.id]: p.name }), {});
+      
+      const flattenedSales = [];
+      ordersData.forEach(order => {
+        const orderDate = new Date(order.orderDate);
+        const currentMonth = new Date().getMonth();
+        const orderMonth = orderDate.getMonth();
+        let salePeriod = "All Time";
+        if (orderMonth === currentMonth) salePeriod = "This Month";
+        else if (orderMonth === currentMonth - 1) salePeriod = "Last Month";
+
+        if (order.lines && order.lines.length > 0) {
+          order.lines.forEach(line => {
+            flattenedSales.push({
+              id: order.soNumber,
+              date: orderDate.toISOString().split('T')[0],
+              customer: order.customer?.name || "Unknown",
+              product: prodMap[line.productId] || "Unknown",
+              qty: parseFloat(line.quantity),
+              amount: parseFloat(line.total),
+              status: order.status === 'DRAFT' ? 'Draft' : order.status === 'CONFIRMED' ? 'Confirmed' : 'Cancelled',
+              period: salePeriod
+            });
+          });
+        }
+      });
+      setSales(flattenedSales);
+    }).catch(console.error);
+  }, []);
+
+  const filteredSales = sales.filter((s) => period === "All Time" || s.period === period);
 
   const totalSales = filteredSales
     .filter((s) => s.status !== "Cancelled")

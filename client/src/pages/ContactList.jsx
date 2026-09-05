@@ -1,10 +1,24 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, ChevronDown, ChevronRight, LayoutDashboard, LayoutList, MoreVertical, Plus, Search, Settings } from "lucide-react";
-
+import { fetchClient } from "../utils/api";
 
 export default function ContactList() {
   const navigate = useNavigate();
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchClient('/contacts')
+      .then(data => {
+        setContacts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <>
@@ -113,7 +127,7 @@ export default function ContactList() {
                 Contacts
               </h1>
               <span className="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full font-label-md text-label-md border border-outline-variant">
-                142 Contacts
+                {contacts.length} Contacts
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -215,170 +229,52 @@ export default function ContactList() {
                 </tr>
               </thead>
               <tbody className="font-body-md text-body-md divide-y divide-[#E2E8F0]">
-                {/*  Row 1  */}
-                <tr className="hover:bg-[#CCFBF1]/30 transition-colors group">
-                  <td className="p-4 text-center">
-                    <input
-                      className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
-                      type="checkbox"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        alt="Avatar"
-                        className="w-10 h-10 rounded-full object-cover border border-[#E2E8F0]"
-                        data-alt="Close up minimalist portrait photo of Sarah Jenkins in a bright well lit studio. Cool clean lighting."
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5-FdBn6gkj3UHBUKTsV9bhcq7o7XV_NYY4LqQUgSWUsCNd11iLZMQUgIacgMjpfNza8a_OofUS8igZEQvUK-XnR6GN7T3_efXRnAedcWMCxNO4UFOv1Dl1nV7OgQfs1IZ6Q611Z020-5QLs4A6hBYkuA9-fhu5HMAbdC48EKZT-hGBQawHrVtJgkKD9EN4VFHVjpJyPhC-82TEJGXJPY5E3g8fHGmKdgZNRZWF1F2amy43MdLaQu-7guBzNFbkiKxUCdSNpXwnd8p"
-                      />
-                      <span className="font-semibold text-on-surface">
-                        Sarah Jenkins
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-[#64748B]">sarah.j@acmecorp.com</td>
-                  <td className="p-4 text-[#64748B]">+1 (555) 123-4567</td>
-                  <td className="p-4 text-on-surface">Acme Corp</td>
-                  <td className="p-4">
-                    <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Customer
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="bg-[#CCFBF1] text-[#0F766E] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Active
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-[#64748B]">
-                    <button className="p-1 rounded-full hover:bg-[#E2E8F0] transition-colors group-hover:text-primary-container">
-                      <span className="material-symbols-outlined">
-                        more_vert
-                      </span>
-                    </button>
-                  </td>
-                </tr>
-                {/*  Row 2  */}
-                <tr className="hover:bg-[#CCFBF1]/30 transition-colors group">
-                  <td className="p-4 text-center">
-                    <input
-                      className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
-                      type="checkbox"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#E5EEFF] text-[#006B5F] flex items-center justify-center font-bold border border-[#E2E8F0]">
-                        MV
-                      </div>
-                      <span className="font-semibold text-on-surface">
-                        Marcus Vance
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-[#64748B]">m.vance@techlogix.io</td>
-                  <td className="p-4 text-[#64748B]">+1 (555) 987-6543</td>
-                  <td className="p-4 text-on-surface">TechLogix</td>
-                  <td className="p-4">
-                    <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Vendor
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="bg-[#CCFBF1] text-[#0F766E] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Active
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-[#64748B]">
-                    <button className="p-1 rounded-full hover:bg-[#E2E8F0] transition-colors group-hover:text-primary-container">
-                      <MoreVertical className="text-[20px]" />
-                    </button>
-                  </td>
-                </tr>
-                {/*  Row 3  */}
-                <tr className="hover:bg-[#CCFBF1]/30 transition-colors group">
-                  <td className="p-4 text-center">
-                    <input
-                      className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
-                      type="checkbox"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        alt="Avatar"
-                        className="w-10 h-10 rounded-full object-cover border border-[#E2E8F0]"
-                        data-alt="Professional studio portrait of Elena Rostova. Soft turquoise background tint. Clean corporate style."
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7mFucCRvaRygYwQFcWiFkGTUI8Rib0cYF3GPnKLsM2wVN9gv53KA51pHpL6vgh-jWCua_w_jaRSm3YwencTSu_OLbHi1HCkRkfPqm0z1uKfsiel-sVuIBCyYfDa_HIWnLyDidn8qRkvzc_wD_2_3qlPbS29TiVfWoNQODdYBUtWETm0WBsnhRD02J-SCyBYupiiefzkbKpOGZ98Jf9MXWoGQ27WLvGmTXYSCe0cwERQH9Q6KX0jJTwFdPN8z2kMr3RO38Pb21MFAR"
-                      />
-                      <span className="font-semibold text-on-surface">
-                        Elena Rostova
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-[#64748B]">
-                    elena@globalpartners.net
-                  </td>
-                  <td className="p-4 text-[#64748B]">+44 20 7946 0958</td>
-                  <td className="p-4 text-on-surface">Global Partners</td>
-                  <td className="p-4">
-                    <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Partner
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="bg-[#FEE2E2] text-[#B91C1C] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Inactive
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-[#64748B]">
-                    <button className="p-1 rounded-full hover:bg-[#E2E8F0] transition-colors group-hover:text-primary-container">
-                      <span className="material-symbols-outlined">
-                        more_vert
-                      </span>
-                    </button>
-                  </td>
-                </tr>
-                {/*  Row 4  */}
-                <tr className="hover:bg-[#CCFBF1]/30 transition-colors group">
-                  <td className="p-4 text-center">
-                    <input
-                      className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
-                      type="checkbox"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#E5EEFF] text-[#006B5F] flex items-center justify-center font-bold border border-[#E2E8F0]">
-                        DW
-                      </div>
-                      <span className="font-semibold text-on-surface">
-                        David Wright
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-[#64748B]">
-                    david.w@wrightlogistics.com
-                  </td>
-                  <td className="p-4 text-[#64748B]">+1 (555) 222-3344</td>
-                  <td className="p-4 text-on-surface">Wright Logistics</td>
-                  <td className="p-4">
-                    <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Vendor
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="bg-[#CCFBF1] text-[#0F766E] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                      Active
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-[#64748B]">
-                    <button className="p-1 rounded-full hover:bg-[#E2E8F0] transition-colors group-hover:text-primary-container">
-                      <span className="material-symbols-outlined">
-                        more_vert
-                      </span>
-                    </button>
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr><td colSpan="8" className="p-4 text-center text-[#64748B]">Loading contacts...</td></tr>
+                ) : contacts.map(c => {
+                  const initials = c.name ? c.name.substring(0, 2).toUpperCase() : 'CO';
+                  const isVendor = c.isVendor;
+                  const roleStr = c.isVendor && c.isCustomer ? "Vendor & Customer" : c.isVendor ? "Vendor" : "Customer";
+                  
+                  return (
+                    <tr key={c.id} className="hover:bg-[#CCFBF1]/30 transition-colors group">
+                      <td className="p-4 text-center">
+                        <input
+                          className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
+                          type="checkbox"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#E5EEFF] text-[#006B5F] flex items-center justify-center font-bold border border-[#E2E8F0]">
+                            {initials}
+                          </div>
+                          <span className="font-semibold text-on-surface">
+                            {c.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-[#64748B]">{c.email}</td>
+                      <td className="p-4 text-[#64748B]">{c.phone}</td>
+                      <td className="p-4 text-on-surface">{c.companyName}</td>
+                      <td className="p-4">
+                        <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
+                          {roleStr}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="bg-[#CCFBF1] text-[#0F766E] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
+                          Active
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-[#64748B]">
+                        <button className="p-1 rounded-full hover:bg-[#E2E8F0] transition-colors group-hover:text-primary-container">
+                          <MoreVertical className="text-[20px]" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -386,7 +282,7 @@ export default function ContactList() {
           <div className="border-t border-[#E2E8F0] bg-[#FFFFFF] p-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <span className="font-body-sm text-body-sm text-[#64748B]">
-                Showing 1-4 of 142 contacts
+                Showing 1-{contacts.length} of {contacts.length} contacts
               </span>
               <div className="flex items-center gap-2">
                 <span className="font-body-sm text-body-sm text-[#64748B]">

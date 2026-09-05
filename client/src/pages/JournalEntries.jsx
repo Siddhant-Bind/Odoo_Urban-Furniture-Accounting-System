@@ -1,14 +1,26 @@
-﻿import React from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Plus, Settings } from "lucide-react";
 
-const ENTRIES = [
-  { id: 1, date: "2025-06-15", number: "JE/2025/0042", partner: "Acme Corp", journal: "Sales", total: "₹1,24,500", status: "Posted" },
-  { id: 2, date: "2025-06-18", number: "JE/2025/0043", partner: "TechLogix", journal: "Purchase", total: "₹38,200", status: "Draft" },
-];
+import { fetchClient } from "../utils/api";
 
 export default function JournalEntries() {
   const navigate = useNavigate();
+  const [entries, setEntries] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetchClient('/journal-entries')
+      .then(data => {
+        setEntries(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <>
       <header className="bg-white border-b border-[#E2E8F0] shadow-sm z-50 fixed w-full top-0 h-16">
@@ -48,7 +60,7 @@ export default function JournalEntries() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-baseline gap-3">
             <h1 className="text-2xl font-bold text-[#0F172A]">Journal Entries</h1>
-            <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full text-xs border border-[#E2E8F0]">{ENTRIES.length} Entries</span>
+            <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full text-xs border border-[#E2E8F0]">{entries.length} Entries</span>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => navigate(-1)} className="px-4 py-2 rounded-full border border-[#E2E8F0] text-sm font-medium text-[#64748B] hover:bg-[#F8FAFC] transition-colors">Back</button>
@@ -72,23 +84,28 @@ export default function JournalEntries() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-[#E2E8F0]">
-              {ENTRIES.map((e) => (
+              {loading ? (
+                <tr><td colSpan="7" className="p-4 text-center text-[#64748B]">Loading entries...</td></tr>
+              ) : entries.map((e) => {
+                const totalDebit = e.lines?.reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0) || 0;
+                return (
                 <tr key={e.id} className="hover:bg-[#CCFBF1]/15 transition-colors cursor-pointer" onClick={() => navigate("/journal-entries/new")}>
                   <td className="p-4 text-center" onClick={ev => ev.stopPropagation()}>
                     <input type="checkbox" className="w-[18px] h-[18px] rounded border-[#CBD5E1] cursor-pointer" />
                   </td>
-                  <td className="p-4 text-[#64748B]">{e.date}</td>
-                  <td className="p-4 font-mono text-xs font-semibold text-[#14B8A6]">{e.number}</td>
-                  <td className="p-4 font-medium text-[#0F172A]">{e.partner}</td>
-                  <td className="p-4 text-[#64748B]">{e.journal}</td>
-                  <td className="p-4 font-semibold text-[#0F172A]">{e.total}</td>
+                  <td className="p-4 text-[#64748B]">{new Date(e.createdAt).toLocaleDateString()}</td>
+                  <td className="p-4 font-mono text-xs font-semibold text-[#14B8A6]">{e.reference || `JE-${e.id}`}</td>
+                  <td className="p-4 font-medium text-[#0F172A]">-</td>
+                  <td className="p-4 text-[#64748B]">{e.journal?.name || "-"}</td>
+                  <td className="p-4 font-semibold text-[#0F172A]">₹{totalDebit.toLocaleString()}</td>
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${e.status === "Posted" ? "bg-[#CCFBF1] text-[#0F766E]" : "bg-[#F1F5F9] text-[#64748B]"}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${e.status === "POSTED" ? "bg-[#CCFBF1] text-[#0F766E]" : "bg-[#F1F5F9] text-[#64748B]"}`}>
                       {e.status}
                     </span>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

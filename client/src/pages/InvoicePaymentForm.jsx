@@ -3,53 +3,54 @@ import { ArrowLeft, CheckCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchClient } from "../utils/api";
 
-export default function BillPaymentForm() {
+export default function InvoicePaymentForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const preselectedBillId = searchParams.get("billId");
+  const preselectedInvoiceId = searchParams.get("invoiceId");
 
-  const [paymentType, setPaymentType] = useState("Paid");
+  const [paymentType, setPaymentType] = useState("Received");
   const [paymentVia, setPaymentVia] = useState("BANK");
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
   const [note, setNote] = useState("");
-  const [billId, setBillId] = useState(preselectedBillId || "");
-  const [bills, setBills] = useState([]);
+  const [invoiceId, setInvoiceId] = useState(preselectedInvoiceId || "");
+  const [invoices, setInvoices] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    fetchClient("/purchase/bills")
+    fetchClient("/sales/invoices")
       .then((data) => {
-        // Show only POSTED (confirmed) bills
-        const posted = data.filter((b) => b.status === "POSTED");
-        setBills(posted);
+        // Show only POSTED (confirmed) invoices that are not yet fully paid
+        const posted = data.filter((inv) => inv.status === "POSTED");
+        setInvoices(posted);
         // If preselected, auto-fill amount
-        if (preselectedBillId) {
+        if (preselectedInvoiceId) {
           const found = posted.find(
-            (b) => b.id.toString() === preselectedBillId.toString()
+            (inv) => inv.id.toString() === preselectedInvoiceId.toString()
           );
           if (found) setAmount(found.totalAmount?.toString() || "");
         }
       })
       .catch(console.error);
-  }, [preselectedBillId]);
+  }, [preselectedInvoiceId]);
 
-  const handleBillChange = (val) => {
-    setBillId(val);
-    const found = bills.find((b) => b.id.toString() === val);
+  // When invoice changes, auto-fill amount
+  const handleInvoiceChange = (val) => {
+    setInvoiceId(val);
+    const found = invoices.find((inv) => inv.id.toString() === val);
     if (found) setAmount(found.totalAmount?.toString() || "");
   };
 
-  const selectedBill = bills.find((b) => b.id.toString() === billId.toString());
+  const selectedInvoice = invoices.find((inv) => inv.id.toString() === invoiceId.toString());
 
   const handleConfirm = async () => {
-    if (!billId) { alert("Please select a vendor bill."); return; }
+    if (!invoiceId) { alert("Please select an invoice."); return; }
     if (!amount || parseFloat(amount) <= 0) { alert("Please enter a valid amount."); return; }
 
     setSubmitting(true);
     try {
-      await fetchClient(`/purchase/bills/${billId}/pay`, {
+      await fetchClient(`/sales/invoices/${invoiceId}/pay`, {
         method: "POST",
         body: JSON.stringify({
           amount: parseFloat(amount),
@@ -75,19 +76,19 @@ export default function BillPaymentForm() {
           <h2 className="text-title-lg font-bold text-on-surface">Payment Recorded!</h2>
           <p className="text-body-md text-on-surface-variant">
             ₹{parseFloat(amount).toLocaleString("en-IN")} payment has been registered against{" "}
-            <span className="font-semibold text-on-surface">{selectedBill?.billNumber}</span>.
+            <span className="font-semibold text-on-surface">{selectedInvoice?.invoiceNumber}</span>.
           </p>
           <div className="flex gap-3 mt-2">
             <button
-              onClick={() => navigate("/vendor-bills")}
+              onClick={() => navigate("/customer-invoices")}
               className="px-5 py-2.5 rounded-full font-label-md font-semibold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
             >
-              Back to Bills
+              Back to Invoices
             </button>
             <button
               onClick={() => {
                 setSuccess(false);
-                setBillId("");
+                setInvoiceId("");
                 setAmount("");
               }}
               className="px-5 py-2.5 rounded-full font-label-md font-semibold bg-surface-container-high text-on-surface hover:bg-surface-container transition-colors"
@@ -114,15 +115,21 @@ export default function BillPaymentForm() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-title-lg font-bold text-on-surface">Bill Payment</h1>
-              <p className="text-body-sm text-on-surface-variant">Register a new vendor payment</p>
+              <h1 className="text-title-lg font-bold text-on-surface">Invoice Payment</h1>
+              <p className="text-body-sm text-on-surface-variant">Register receipt from customer</p>
             </div>
           </div>
-          {/* Status display pills */}
-          <div className="flex items-center gap-1.5">
-            <span className="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">Draft</span>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">Confirm</span>
-            <span className="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">Cancelled</span>
+          <div className="flex items-center gap-2">
+            {/* Status pills (read-only display) */}
+            <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">
+              Draft
+            </span>
+            <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">
+              Confirm
+            </span>
+            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">
+              Cancelled
+            </span>
           </div>
         </div>
 
@@ -161,24 +168,24 @@ export default function BillPaymentForm() {
             </div>
           </div>
 
-          {/* Bill Selection */}
+          {/* Invoice selection */}
           <div className="flex flex-col gap-2">
-            <label className="font-label-md font-bold text-on-surface">Select Vendor Bill</label>
+            <label className="font-label-md font-bold text-on-surface">Customer Invoice</label>
             <select
-              value={billId}
-              onChange={(e) => handleBillChange(e.target.value)}
+              value={invoiceId}
+              onChange={(e) => handleInvoiceChange(e.target.value)}
               className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none"
             >
-              <option value="">Select a bill...</option>
-              {bills.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.billNumber} — ₹{b.totalAmount} ({b.vendor?.name || "—"})
+              <option value="">Select an invoice...</option>
+              {invoices.map((inv) => (
+                <option key={inv.id} value={inv.id}>
+                  {inv.invoiceNumber} — ₹{inv.totalAmount} ({inv.customer?.name || "—"})
                 </option>
               ))}
             </select>
-            {bills.length === 0 && (
+            {invoices.length === 0 && (
               <p className="text-xs text-on-surface-variant mt-1">
-                No confirmed (posted) bills found. Confirm a vendor bill first.
+                No confirmed (posted) invoices found. Confirm an invoice first.
               </p>
             )}
           </div>
@@ -243,10 +250,10 @@ export default function BillPaymentForm() {
             <div className="p-4 rounded-xl bg-primary-container/30 border border-primary/20 flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="font-label-sm text-on-surface-variant">
-                  Paying via {paymentVia === "CASH" ? "Cash" : "Bank"}
+                  Receiving via {paymentVia === "CASH" ? "Cash" : "Bank"}
                 </span>
                 <span className="font-body-sm text-on-surface-variant">
-                  to {selectedBill?.vendor?.name || "vendor"}
+                  from {selectedInvoice?.customer?.name || "customer"}
                 </span>
               </div>
               <span className="text-title-md font-bold text-primary">

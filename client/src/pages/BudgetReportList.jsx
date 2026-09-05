@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, ChevronDown, Kanban, List, Printer, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchClient } from "../utils/api";
 
 // Helper component for inline donut chart
 const MiniDonut = ({ percent, color = "#14B8A6" }) => {
@@ -42,6 +43,14 @@ const MiniDonut = ({ percent, color = "#14B8A6" }) => {
 
 export default function BudgetReportList() {
   const navigate = useNavigate();
+  const [budgets, setBudgets] = useState([]);
+
+  useEffect(() => {
+    fetchClient('/budgets').then(data => {
+      // Group by budgetName if needed, but since our UI shows individual budgets, we can just display them
+      setBudgets(data);
+    }).catch(console.error);
+  }, []);
 
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen relative overflow-x-hidden flex flex-col">
@@ -127,57 +136,39 @@ export default function BudgetReportList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container">
-                <tr className="hover:bg-surface-container-low/50 transition-colors cursor-pointer group" onClick={() => navigate("/analytical-budget/new")}>
-                  <td className="px-6 py-4 text-primary font-semibold group-hover:underline">
-                    Q1 Operational Budget
-                  </td>
-                  <td className="px-6 py-4 text-on-surface">Jan 01, 2025</td>
-                  <td className="px-6 py-4 text-on-surface">Mar 31, 2025</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                      Confirmed
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <MiniDonut percent={85} />
-                  </td>
-                </tr>
-                <tr className="hover:bg-surface-container-low/50 transition-colors cursor-pointer group" onClick={() => navigate("/analytical-budget/revised")}>
-                  <td className="px-6 py-4 text-primary font-semibold group-hover:underline">
-                    Q2 Marketing Budget - Revised
-                  </td>
-                  <td className="px-6 py-4 text-on-surface">Apr 01, 2025</td>
-                  <td className="px-6 py-4 text-on-surface">Jun 30, 2025</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                      Revised
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <MiniDonut percent={42} />
-                  </td>
-                </tr>
-                <tr className="hover:bg-surface-container-low/50 transition-colors cursor-pointer group" onClick={() => navigate("/analytical-budget/new")}>
-                  <td className="px-6 py-4 text-primary font-semibold group-hover:underline">
-                    Annual R&D Allocation
-                  </td>
-                  <td className="px-6 py-4 text-on-surface">Jan 01, 2025</td>
-                  <td className="px-6 py-4 text-on-surface">Dec 31, 2025</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-                      Draft
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <MiniDonut percent={15} />
-                  </td>
-                </tr>
+                {budgets.map(budget => {
+                  const committed = parseFloat(budget.committedAmount) || 0;
+                  const achieved = parseFloat(budget.achievedAmount) || 0;
+                  const pct = committed > 0 ? (achieved / committed) * 100 : 0;
+                  
+                  return (
+                    <tr key={budget.id} className="hover:bg-surface-container-low/50 transition-colors cursor-pointer group" onClick={() => navigate("/analytical-budget/new")}>
+                      <td className="px-6 py-4 text-primary font-semibold group-hover:underline">
+                        {budget.budgetName} ({budget.analyticAccount?.name})
+                      </td>
+                      <td className="px-6 py-4 text-on-surface">{new Date(budget.periodStart).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-on-surface">{new Date(budget.periodEnd).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                          budget.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-800' :
+                          budget.status === 'REVISED' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {budget.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <MiniDonut percent={pct.toFixed(0)} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
           
           <div className="p-4 border-t border-surface-container bg-surface-container-lowest text-center">
-            <span className="font-body-sm text-on-surface-variant">Showing 3 records</span>
+            <span className="font-body-sm text-on-surface-variant">Showing {budgets.length} records</span>
           </div>
         </div>
 

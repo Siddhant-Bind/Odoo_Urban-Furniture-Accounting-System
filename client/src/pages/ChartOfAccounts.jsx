@@ -1,32 +1,34 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Lock, MoreVertical, Plus, Settings } from "lucide-react";
 
-const DEFAULT_ACCOUNTS = [
-  { id: 1, name: "Bank A/c", type: "Assets", system: true },
-  { id: 2, name: "Cash A/c", type: "Assets", system: true },
-  { id: 3, name: "Debtors A/c", type: "Assets", system: true },
-  { id: 4, name: "Purchase Expense A/c", type: "Expenses", system: true },
-  { id: 5, name: "Other Expense A/c", type: "Expenses", system: true },
-  { id: 6, name: "Creditors A/c", type: "Liability", system: true },
-  { id: 7, name: "Sales Income A/c", type: "Income", system: true },
-  { id: 8, name: "Capital A/c", type: "Capital", system: true },
-];
+import { fetchClient } from "../utils/api";
 
 const TYPE_COLORS = {
-  Assets: "bg-blue-50 text-blue-700",
-  Expenses: "bg-rose-50 text-rose-700",
-  Liability: "bg-orange-50 text-orange-700",
-  Income: "bg-green-50 text-green-700",
-  Capital: "bg-purple-50 text-purple-700",
-  Bank: "bg-sky-50 text-sky-700",
-  Cash: "bg-teal-50 text-teal-700",
+  ASSET: "bg-blue-50 text-blue-700",
+  EXPENSE: "bg-rose-50 text-rose-700",
+  LIABILITY: "bg-orange-50 text-orange-700",
+  EQUITY: "bg-purple-50 text-purple-700",
+  REVENUE: "bg-green-50 text-green-700",
 };
 
 export default function ChartOfAccounts() {
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState(DEFAULT_ACCOUNTS);
+  const [accounts, setAccounts] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    fetchClient('/accounts')
+      .then(data => {
+        setAccounts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <>
@@ -98,28 +100,25 @@ export default function ChartOfAccounts() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-[#E2E8F0]">
-              {accounts.map((acc) => (
+              {loading ? (
+                <tr><td colSpan="5" className="p-4 text-center text-[#64748B]">Loading accounts...</td></tr>
+              ) : accounts.map((acc) => (
                 <tr key={acc.id} className="hover:bg-[#CCFBF1]/15 transition-colors group">
                   <td className="p-4 text-center"><input type="checkbox" className="w-[18px] h-[18px] rounded border-[#CBD5E1] cursor-pointer" /></td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      {acc.system && <Lock size={13} className="text-[#94A3B8] flex-shrink-0" />}
-                      <span className="font-medium text-[#0F172A]">{acc.name}</span>
+                      {/* Using code to determine system lock, for now just show name + code */}
+                      <span className="font-medium text-[#0F172A]">{acc.code} - {acc.name}</span>
                     </div>
                   </td>
                   <td className="p-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${TYPE_COLORS[acc.type] || "bg-gray-100 text-gray-600"}`}>{acc.type}</span>
                   </td>
                   <td className="p-4">
-                    {acc.system
-                      ? <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]">System Default</span>
-                      : <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#CCFBF1] text-[#0F766E]">Custom</span>
-                    }
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]">Active</span>
                   </td>
                   <td className="p-4 text-center">
-                    {!acc.system && (
-                      <button className="p-1 rounded-full hover:bg-[#E2E8F0] opacity-0 group-hover:opacity-100 transition-all"><MoreVertical size={15} className="text-[#64748B]" /></button>
-                    )}
+                    <button className="p-1 rounded-full hover:bg-[#E2E8F0] opacity-0 group-hover:opacity-100 transition-all"><MoreVertical size={15} className="text-[#64748B]" /></button>
                   </td>
                 </tr>
               ))}

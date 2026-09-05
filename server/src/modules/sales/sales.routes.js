@@ -17,6 +17,7 @@ router.post('/orders/:id/confirm', salesOrderController.confirmSO);
 // Customer Invoices
 router.post('/invoices', customerInvoiceController.createCustomerInvoice);
 router.get('/invoices', customerInvoiceController.getCustomerInvoices);
+router.get('/invoices/:id', customerInvoiceController.getCustomerInvoiceById);
 router.post('/invoices/:id/confirm', customerInvoiceController.confirmCustomerInvoice);
 
 // Payments

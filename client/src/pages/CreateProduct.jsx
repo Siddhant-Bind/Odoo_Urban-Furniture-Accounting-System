@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Check, ChevronDown, Image, Plus, Settings, X } from "lucide-react";
 
@@ -73,7 +73,24 @@ export default function CreateProduct() {
             <button onClick={() => navigate(-1)} className="rounded-full border-[1.5px] border-[#E2E8F0] text-[#64748B] bg-transparent px-5 py-2 text-sm font-medium hover:bg-[#F8FAFC] transition-colors flex items-center gap-2">
               <X size={15} /> Discard
             </button>
-            <button onClick={() => navigate("/products/list")} className="rounded-full bg-[#14B8A6] text-white px-6 py-2 text-sm font-semibold hover:bg-[#0F766E] transition-all flex items-center gap-2 shadow-sm">
+            <button onClick={async () => {
+              try {
+                const { fetchClient } = await import('../utils/api');
+                await fetchClient('/products', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    name: form.name,
+                    type: form.type === 'Service' ? 'SERVICE' : 'GOODS',
+                    salesPrice: form.salesPrice || "0",
+                    cost: form.cost || "0",
+                    // The backend might need categoryId, but for now we skip it if it's optional or not strict
+                  })
+                });
+                navigate("/products/list");
+              } catch (e) {
+                alert(e.message);
+              }
+            }} className="rounded-full bg-[#14B8A6] text-white px-6 py-2 text-sm font-semibold hover:bg-[#0F766E] transition-all flex items-center gap-2 shadow-sm">
               <Check size={15} /> Confirm
             </button>
           </div>

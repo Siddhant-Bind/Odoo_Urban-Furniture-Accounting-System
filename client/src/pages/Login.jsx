@@ -14,14 +14,14 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!loginId.trim()) { setError("Please enter your Login ID."); return; }
     if (!password) { setError("Please enter your password."); return; }
 
     setLoading(true);
-    const result = login(loginId.trim(), password, role);
+    const result = await login(loginId.trim(), password, role);
     setLoading(false);
 
     if (result.success) {
@@ -178,8 +178,8 @@ export default function Login() {
               {/* Test credentials hint */}
               <div className="mt-4 px-4 py-2 rounded-lg bg-surface-container-low border border-surface-container text-xs text-on-surface-variant text-left w-full">
                 <p className="font-semibold mb-1 text-on-surface">Demo credentials:</p>
-                <p>Admin: <span className="font-mono">admin01</span> / <span className="font-mono">Admin@1234</span></p>
-                <p>Accountant: <span className="font-mono">acc001</span> / <span className="font-mono">Acc@12345</span></p>
+                <p>Admin: <span className="font-mono">admin</span> / <span className="font-mono">Password@123</span></p>
+                <p>Accountant: <span className="font-mono">invoicing.user1</span> / <span className="font-mono">Password@123</span></p>
               </div>
 
               <div className="mt-space-xl flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant">

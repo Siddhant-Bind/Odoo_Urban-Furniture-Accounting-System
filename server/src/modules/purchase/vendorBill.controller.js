@@ -50,9 +50,23 @@ export const createVendorBill = async (req, res, next) => {
 export const getVendorBills = async (req, res, next) => {
   try {
     const bills = await prisma.vendorBill.findMany({
-      include: { vendor: true, lines: true }
+      include: { vendor: true, lines: true, payments: true },
+      orderBy: { id: 'desc' }
     });
     res.json(bills);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getVendorBillById = async (req, res, next) => {
+  try {
+    const bill = await prisma.vendorBill.findUnique({
+      where: { id: parseInt(req.params.id) },
+      include: { vendor: true, lines: { include: { product: true } }, payments: true }
+    });
+    if (!bill) return res.status(404).json({ error: 'Bill not found' });
+    res.json(bill);
   } catch (error) {
     next(error);
   }

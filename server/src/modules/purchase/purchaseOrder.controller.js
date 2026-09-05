@@ -35,9 +35,15 @@ export const createPO = async (req, res, next) => {
 export const getPOs = async (req, res, next) => {
   try {
     const pos = await prisma.purchaseOrder.findMany({
-      include: { vendor: true, lines: true }
+      include: { vendor: true, lines: true },
+      orderBy: { id: 'desc' }
     });
-    res.json(pos);
+    const result = pos.map(po => ({
+      ...po,
+      totalAmount: po.lines.reduce((sum, l) => sum + Number(l.total), 0),
+      vendorName: po.vendor?.name || ''
+    }));
+    res.json(result);
   } catch (error) {
     next(error);
   }

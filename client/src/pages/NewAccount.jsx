@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, X } from "lucide-react";
 
@@ -11,8 +11,35 @@ export default function NewAccount() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", type: "" });
 
-  const handleSave = () => {
-    if (form.name && form.type) navigate("/chart-of-accounts");
+  const handleSave = async () => {
+    if (form.name && form.type) {
+      // Map UI types to Backend Prisma Enums
+      const typeMap = {
+        "Asset": "ASSET",
+        "Bank": "ASSET",
+        "Cash": "ASSET",
+        "Liability": "LIABILITY",
+        "Capital": "EQUITY",
+        "Income": "REVENUE",
+        "Expenses": "EXPENSE",
+        "Other Expenses": "EXPENSE"
+      };
+
+      try {
+        const { fetchClient } = await import('../utils/api');
+        await fetchClient('/accounts', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: form.name,
+            code: Math.floor(1000 + Math.random() * 9000).toString(), // Generate a random code for now
+            type: typeMap[form.type] || "ASSET"
+          })
+        });
+        navigate("/chart-of-accounts");
+      } catch (e) {
+        alert(e.message);
+      }
+    }
   };
 
   return (
