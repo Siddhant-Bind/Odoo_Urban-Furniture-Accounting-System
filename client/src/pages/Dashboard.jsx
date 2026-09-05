@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { BarChart3, CheckCircle, ChevronDown, ChevronRight, Clock, Filter, Kanban, Landmark, LayoutGrid, List, Lock, PieChart, Plus, Receipt, RefreshCw, Search, Shield, ShoppingBag, Truck, User, Wallet } from "lucide-react";
 
@@ -7,6 +7,18 @@ export default function Dashboard() {
   const navigate = useNavigate();
   // TODO: Add role context here later. For now, mocking as Admin.
   const userRole = "Admin";
+
+  const [viewMode, setViewMode] = useState("list");
+  const [openSections, setOpenSections] = useState({
+    sales: true,
+    purchase: true,
+    account: true,
+    report: true,
+  });
+
+  const toggleSection = (key) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen relative overflow-x-hidden flex flex-col">
@@ -61,7 +73,7 @@ export default function Dashboard() {
               </span>
               {userRole === "Admin" && (
                 <button
-                  className="inline-flex items-center gap-space-xs px-space-base py-space-sm rounded-full bg-primary-container text-on-primary font-body-md text-body-md font-semibold hover:bg-primary transition-colors"
+                  className="inline-flex items-center gap-space-xs px-space-base py-space-sm rounded-full bg-primary text-on-primary font-body-md text-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
                   type="button"
                   onClick={() => navigate("/create-user")}
                 >
@@ -121,24 +133,34 @@ export default function Dashboard() {
                   role="tablist"
                 >
                   <button
-                    className="px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold bg-surface-container-lowest text-on-surface shadow-sm transition-all inline-flex items-center gap-space-xs"
+                    className={`px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold transition-all inline-flex items-center gap-space-xs cursor-pointer ${
+                      viewMode === "list"
+                        ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
                     id="btn-list-view"
                     type="button"
+                    onClick={() => setViewMode("list")}
                   >
                     <List className="text-[16px]" />
                     <span>List Grid</span>
                   </button>
                   <button
-                    className="px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold text-on-surface-variant hover:text-on-surface transition-all inline-flex items-center gap-space-xs"
+                    className={`px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold transition-all inline-flex items-center gap-space-xs cursor-pointer ${
+                      viewMode === "kanban"
+                        ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
                     id="btn-kanban-view"
                     type="button"
+                    onClick={() => setViewMode("kanban")}
                   >
                     <Kanban className="text-[16px]" />
                     <span>Kanban</span>
                   </button>
                 </div>
                 <button
-                  className="h-10 w-10 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface flex items-center justify-center shadow-sm transition-colors"
+                  className="h-10 w-10 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface flex items-center justify-center shadow-sm transition-colors cursor-pointer"
                   title="Refresh Telemetry"
                   type="button"
                 >
@@ -170,488 +192,474 @@ export default function Dashboard() {
               </div>
             </div>
           </section>
+
           {/*  Two Column Layout  */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
             {/*  LEFT MAIN COLUMN: ~70% (col-span-8 or 8.5)  */}
             <main className="lg:col-span-8 flex flex-col gap-space-xl w-full">
-              {/*  Operational Summary Cards (3-up Bento Grid)  */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-space-base">
-                {/*  CARD 1: Sales Summary  */}
-                <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                  <div>
-                    <div className="flex items-center justify-between pb-space-sm">
-                      <div className="flex items-center gap-space-xs">
-                        <div className="w-7 h-7 rounded-lg bg-secondary-container/50 text-secondary flex items-center justify-center">
-                          <Receipt className="text-[16px]" />
+              {viewMode === "list" ? (
+                <>
+                  {/*  Operational Summary Cards (3-up Bento Grid)  */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-space-base">
+                    {/*  CARD 1: Sales Summary  */}
+                    <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex items-center justify-between pb-space-sm">
+                          <div className="flex items-center gap-space-xs">
+                            <div className="w-7 h-7 rounded-lg bg-secondary-container/50 text-secondary flex items-center justify-center">
+                              <Receipt className="text-[16px]" />
+                            </div>
+                            <span className="font-headline-sm text-headline-sm text-on-surface">
+                              Sales
+                            </span>
+                          </div>
+                          <button
+                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors"
+                            type="button"
+                          >
+                            <Plus className="text-[14px]" />
+                            <span>New</span>
+                          </button>
                         </div>
-                        <span className="font-headline-sm text-headline-sm text-on-surface">
-                          Sales
-                        </span>
-                      </div>
-                      <button
-                        className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors"
-                        type="button"
-                      >
-                        <Plus className="text-[14px]" />
-                        <span>New</span>
-                      </button>
-                    </div>
-                    <div className="mt-space-2xs">
-                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                        Pipeline Volume
-                      </span>
-                      <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
-                        $42,850.00
-                      </div>
-                    </div>
-                    {/*  Segmented Status Badges  */}
-                    <div className="flex items-center gap-space-2xs mt-space-md pb-space-sm overflow-x-auto">
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"
-                        type="button"
-                      >
-                        All (3)
-                      </button>
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                        type="button"
-                      >
-                        Confirmed (0)
-                      </button>
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                        type="button"
-                      >
-                        Draft (3)
-                      </button>
-                    </div>
-                  </div>
-                  {/*  Micro Record Rows  */}
-                  <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
-                    <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                          SO-1004 • Acme Retail
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          $14,200.00
-                        </span>
-                      </div>
-                      <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Draft
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                          SO-1003 • Horizon Goods
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          $18,450.00
-                        </span>
-                      </div>
-                      <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Draft
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                          SO-1002 • Pacific Mart Ltd
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          $10,200.00
-                        </span>
-                      </div>
-                      <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Draft
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {/*  CARD 2: Purchase Summary  */}
-                <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                  <div>
-                    <div className="flex items-center justify-between pb-space-sm">
-                      <div className="flex items-center gap-space-xs">
-                        <div className="w-7 h-7 rounded-lg bg-surface-container-high text-primary flex items-center justify-center">
-                          <Truck className="text-[16px]" />
+                        <div className="mt-space-2xs">
+                          <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                            Pipeline Volume
+                          </span>
+                          <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
+                            $42,850.00
+                          </div>
                         </div>
-                        <span className="font-headline-sm text-headline-sm text-on-surface">
-                          Purchase
-                        </span>
-                      </div>
-                      <button
-                        className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors"
-                        type="button"
-                      >
-                        <Plus className="text-[14px]" />
-                        <span>New</span>
-                      </button>
-                    </div>
-                    <div className="mt-space-2xs">
-                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                        Payable Committed
-                      </span>
-                      <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
-                        $28,400.00
-                      </div>
-                    </div>
-                    {/*  Segmented Status Badges  */}
-                    <div className="flex items-center gap-space-2xs mt-space-md pb-space-sm overflow-x-auto">
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"
-                        type="button"
-                      >
-                        All (3)
-                      </button>
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                        type="button"
-                      >
-                        Confirmed (0)
-                      </button>
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                        type="button"
-                      >
-                        Draft (2)
-                      </button>
-                    </div>
-                  </div>
-                  {/*  Micro Record Rows  */}
-                  <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
-                    <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                          PO-2009 • Global Logistics
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          $12,500.00
-                        </span>
-                      </div>
-                      <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Draft
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                          PO-2008 • Apex Supply
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          $8,900.00
-                        </span>
-                      </div>
-                      <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Draft
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
-                          PO-2007 • Delta Mfg
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          $7,000.00
-                        </span>
-                      </div>
-                      <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Draft
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {/*  CARD 3: Budget Reports  */}
-                <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                  <div>
-                    <div className="flex items-center justify-between pb-space-sm">
-                      <div className="flex items-center gap-space-xs">
-                        <div className="w-7 h-7 rounded-lg bg-tertiary-fixed/60 text-tertiary flex items-center justify-center">
-                          <PieChart className="text-[16px]" />
+                        {/*  Segmented Status Badges  */}
+                        <div className="flex items-center gap-space-2xs mt-space-md pb-space-sm overflow-x-auto">
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"
+                            type="button"
+                          >
+                            All (3)
+                          </button>
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
+                            type="button"
+                          >
+                            Confirmed (0)
+                          </button>
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
+                            type="button"
+                          >
+                            Draft (3)
+                          </button>
                         </div>
+                      </div>
+                      {/*  Micro Record Rows  */}
+                      <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
+                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                              SO-1004 • Acme Retail
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">
+                              $14,200.00
+                            </span>
+                          </div>
+                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                            Draft
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                              SO-1003 • Horizon Goods
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">
+                              $18,450.00
+                            </span>
+                          </div>
+                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                            Draft
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                              SO-1002 • Pacific Mart Ltd
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">
+                              $10,200.00
+                            </span>
+                          </div>
+                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                            Draft
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {/*  CARD 2: Purchase Summary  */}
+                    <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex items-center justify-between pb-space-sm">
+                          <div className="flex items-center gap-space-xs">
+                            <div className="w-7 h-7 rounded-lg bg-surface-container-high text-primary flex items-center justify-center">
+                              <Truck className="text-[16px]" />
+                            </div>
+                            <span className="font-headline-sm text-headline-sm text-on-surface">
+                              Purchase
+                            </span>
+                          </div>
+                          <button
+                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors"
+                            type="button"
+                          >
+                            <Plus className="text-[14px]" />
+                            <span>New</span>
+                          </button>
+                        </div>
+                        <div className="mt-space-2xs">
+                          <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                            Payable Committed
+                          </span>
+                          <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
+                            $28,400.00
+                          </div>
+                        </div>
+                        {/*  Segmented Status Badges  */}
+                        <div className="flex items-center gap-space-2xs mt-space-md pb-space-sm overflow-x-auto">
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"
+                            type="button"
+                          >
+                            All (3)
+                          </button>
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
+                            type="button"
+                          >
+                            Confirmed (0)
+                          </button>
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
+                            type="button"
+                          >
+                            Draft (2)
+                          </button>
+                        </div>
+                      </div>
+                      {/*  Micro Record Rows  */}
+                      <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
+                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                              PO-2009 • Global Logistics
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">
+                              $12,500.00
+                            </span>
+                          </div>
+                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                            Draft
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                              PO-2008 • Apex Supply
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">
+                              $8,900.00
+                            </span>
+                          </div>
+                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                            Draft
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                              PO-2007 • Delta Mfg
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface-variant">
+                              $7,000.00
+                            </span>
+                          </div>
+                          <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
+                            Draft
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {/*  CARD 3: Budget Reports  */}
+                    <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex items-center justify-between pb-space-sm">
+                          <div className="flex items-center gap-space-xs">
+                            <div className="w-7 h-7 rounded-lg bg-tertiary-fixed/60 text-tertiary flex items-center justify-center">
+                              <PieChart className="text-[16px]" />
+                            </div>
+                            <span className="font-headline-sm text-headline-sm text-on-surface">
+                              Budget Reports
+                            </span>
+                          </div>
+                          <button
+                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold hover:bg-secondary-container transition-colors"
+                            type="button"
+                          >
+                            <span>Report</span>
+                            <ChevronRight className="text-[14px]" />
+                          </button>
+                        </div>
+                        <div className="mt-space-2xs">
+                          <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                            Fiscal Utilization
+                          </span>
+                          <div className="flex items-baseline gap-space-xs mt-space-2xs">
+                            <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
+                              78.4%
+                            </span>
+                            <span className="font-body-sm text-body-sm text-secondary font-semibold">
+                              +3.2% vs Q1
+                            </span>
+                          </div>
+                        </div>
+                        {/*  Segmented Status Badges  */}
+                        <div className="flex items-center gap-space-2xs mt-space-md pb-space-sm overflow-x-auto">
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm text-label-sm font-semibold"
+                            type="button"
+                          >
+                            Achieved (3)
+                          </button>
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
+                            type="button"
+                          >
+                            Budget (2)
+                          </button>
+                          <button
+                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
+                            type="button"
+                          >
+                            Commit (4)
+                          </button>
+                        </div>
+                      </div>
+                      {/*  Micro Metric Progress Bars  */}
+                      <div className="flex flex-col gap-space-sm mt-space-sm pt-space-sm">
+                        <div className="flex flex-col gap-space-2xs">
+                          <div className="flex justify-between font-label-sm text-label-sm">
+                            <span className="text-on-surface font-medium">
+                              Q2 Operations
+                            </span>
+                            <span className="text-on-surface-variant font-semibold">
+                              84%
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary-container rounded-full"
+                              style={{ width: "84%" }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-space-2xs">
+                          <div className="flex justify-between font-label-sm text-label-sm">
+                            <span className="text-on-surface font-medium">
+                              Store Equipment
+                            </span>
+                            <span className="text-on-surface-variant font-semibold">
+                              62%
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary-container rounded-full"
+                              style={{ width: "62%" }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-space-2xs">
+                          <div className="flex justify-between font-label-sm text-label-sm">
+                            <span className="text-on-surface font-medium">
+                              Tech Infrastructure
+                            </span>
+                            <span className="text-on-surface-variant font-semibold">
+                              91%
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-error rounded-full"
+                              style={{ width: "91%" }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/*  Financial Health & Treasury Strip  */}
+                  <section className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-space-xs">
+                        <Landmark className="text-primary text-[20px]" />
                         <span className="font-headline-sm text-headline-sm text-on-surface">
-                          Budget Reports
+                          Treasury &amp; Ledger Integrity
                         </span>
                       </div>
-                      <button
-                        className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold hover:bg-secondary-container transition-colors"
-                        type="button"
-                      >
-                        <span>Report</span>
-                        <ChevronRight className="text-[14px]" />
-                      </button>
-                    </div>
-                    <div className="mt-space-2xs">
-                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                        Fiscal Utilization
+                      <span className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider">
+                        All Feeds Verified
                       </span>
-                      <div className="flex items-baseline gap-space-xs mt-space-2xs">
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-base pt-space-xs">
+                      <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
+                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+                          Available Cash Float
+                        </span>
                         <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                          78.4%
+                          $184,920.45
                         </span>
-                        <span className="font-body-sm text-body-sm text-secondary font-semibold">
-                          +3.2% vs Q1
+                        <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
+                          <CheckCircle className="text-[14px]" />
+                          <span>Reconciled through 08:00 EST</span>
+                        </span>
+                      </div>
+                      <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
+                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+                          Pending Reconciliations
+                        </span>
+                        <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
+                          14 Entries
+                        </span>
+                        <span className="font-body-sm text-body-sm text-on-surface-variant inline-flex items-center gap-space-2xs">
+                          <Clock className="text-[14px]" />
+                          <span>5 require management sign-off</span>
+                        </span>
+                      </div>
+                      <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
+                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+                          Ledger Cryptographic Status
+                        </span>
+                        <span className="font-numeric-lg text-numeric-lg text-primary font-bold">
+                          Consensus 100%
+                        </span>
+                        <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
+                          <Lock className="text-[14px]" />
+                          <span>Immutable dual-entry log synced</span>
                         </span>
                       </div>
                     </div>
-                    {/*  Segmented Status Badges  */}
-                    <div className="flex items-center gap-space-2xs mt-space-md pb-space-sm overflow-x-auto">
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm text-label-sm font-semibold"
-                        type="button"
-                      >
-                        Achieved (3)
-                      </button>
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                        type="button"
-                      >
-                        Budget (2)
-                      </button>
-                      <button
-                        className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                        type="button"
-                      >
-                        Commit (4)
-                      </button>
-                    </div>
-                  </div>
-                  {/*  Micro Metric Progress Bars  */}
-                  <div className="flex flex-col gap-space-sm mt-space-sm pt-space-sm">
-                    <div className="flex flex-col gap-space-2xs">
-                      <div className="flex justify-between font-label-sm text-label-sm">
-                        <span className="text-on-surface font-medium">
-                          Q2 Operations
-                        </span>
-                        <span className="text-on-surface-variant font-semibold">
-                          84%
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary-container rounded-full"
-                          style={{}}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-space-2xs">
-                      <div className="flex justify-between font-label-sm text-label-sm">
-                        <span className="text-on-surface font-medium">
-                          Store Equipment
-                        </span>
-                        <span className="text-on-surface-variant font-semibold">
-                          62%
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary-container rounded-full"
-                          style={{}}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-space-2xs">
-                      <div className="flex justify-between font-label-sm text-label-sm">
-                        <span className="text-on-surface font-medium">
-                          Tech Infrastructure
-                        </span>
-                        <span className="text-on-surface-variant font-semibold">
-                          91%
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-error rounded-full"
-                          style={{}}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/*  Financial Health & Treasury Strip  */}
-              <section className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-space-xs">
-                    <Landmark className="text-primary text-[20px]" />
-                    <span className="font-headline-sm text-headline-sm text-on-surface">
-                      Treasury &amp; Ledger Integrity
-                    </span>
-                  </div>
-                  <span className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider">
-                    All Feeds Verified
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-base pt-space-xs">
-                  <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
-                    <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                      Available Cash Float
-                    </span>
-                    <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                      $184,920.45
-                    </span>
-                    <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
-                      <CheckCircle className="text-[14px]" />
-                      <span>Reconciled through 08:00 EST</span>
-                    </span>
-                  </div>
-                  <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
-                    <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                      Pending Reconciliations
-                    </span>
-                    <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                      14 Entries
-                    </span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant inline-flex items-center gap-space-2xs">
-                      <Clock className="text-[14px]" />
-                      <span>5 require management sign-off</span>
-                    </span>
-                  </div>
-                  <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
-                    <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                      Ledger Cryptographic Status
-                    </span>
-                    <span className="font-numeric-lg text-numeric-lg text-primary font-bold">
-                      Consensus 100%
-                    </span>
-                    <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
-                      <Lock className="text-[14px]" />
-                      <span>Immutable dual-entry log synced</span>
-                    </span>
-                  </div>
-                </div>
-              </section>
-              {/*  Visual Analytics & Recent Transaction Activity  */}
-              <section className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-headline-sm text-headline-sm text-on-surface">
-                      Weekly Cashflow Ingress vs Egress
-                    </span>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">
-                      Comparative rolling 7-day volume across primary
-                      operational accounts
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-space-base text-body-sm font-body-sm">
-                    <div className="flex items-center gap-space-xs">
-                      <span className="w-3 h-3 rounded-full bg-primary-container"></span>
-                      <span className="text-on-surface-variant">
-                        Sales Inflow
+                  </section>
+                </>
+              ) : (
+                /* KANBAN DASHBOARD VIEW */
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-space-base w-full">
+                  {/* Kanban Column 1: Sales Pipelines */}
+                  <div className="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+                    <div className="flex items-center justify-between pb-space-xs border-b border-surface-container-low">
+                      <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                        Sales Orders
+                      </span>
+                      <span className="px-space-xs py-0.5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold">
+                        3 Cards
                       </span>
                     </div>
-                    <div className="flex items-center gap-space-xs">
-                      <span className="w-3 h-3 rounded-full bg-outline-variant"></span>
-                      <span className="text-on-surface-variant">
-                        Procurement Outflow
+                    <div className="flex flex-col gap-space-sm">
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">SO-1004</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">Draft</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Acme Retail</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-primary">$14,200.00</div>
+                      </div>
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">SO-1003</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">Draft</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Horizon Goods</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-primary">$18,450.00</div>
+                      </div>
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">SO-1002</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">Draft</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Pacific Mart Ltd</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-primary">$10,200.00</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kanban Column 2: Purchase Orders */}
+                  <div className="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+                    <div className="flex items-center justify-between pb-space-xs border-b border-surface-container-low">
+                      <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                        Purchase Orders
                       </span>
+                      <span className="px-space-xs py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+                        3 Cards
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-space-sm">
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">PO-2009</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm">Pending</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Global Logistics</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-secondary">$12,500.00</div>
+                      </div>
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">PO-2008</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm">Pending</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Apex Supply</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-secondary">$8,900.00</div>
+                      </div>
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">PO-2007</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Confirmed</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Delta Mfg</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-secondary">$7,000.00</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kanban Column 3: Accounts Overview */}
+                  <div className="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+                    <div className="flex items-center justify-between pb-space-xs border-b border-surface-container-low">
+                      <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                        Treasury Feeds
+                      </span>
+                      <span className="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">
+                        2 Cards
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-space-sm">
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">Bank A/c</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Synced</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Primary Operating Account</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">$184,920.45</div>
+                      </div>
+                      <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between">
+                          <span className="font-label-md text-label-md font-bold text-on-surface">Cash Float</span>
+                          <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Active</span>
+                        </div>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Petty Cash Petty Vault</p>
+                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">$12,400.00</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                {/*  Inline SVG Visualization Chart (Clean, Under 2KB)  */}
-                <div className="w-full h-44 flex items-end pt-space-base">
-                  <svg
-                    className="w-full h-full overflow-visible"
-                    preserveAspectRatio="none"
-                    viewBox="0 0 700 140"
-                  >
-                    {/*  Grid lines  */}
-                    <line
-                      stroke="#E2E8F0"
-                      strokeDasharray="4 4"
-                      strokeWidth="1"
-                      x1="0"
-                      x2="700"
-                      y1="20"
-                      y2="20"
-                    ></line>
-                    <line
-                      stroke="#E2E8F0"
-                      strokeDasharray="4 4"
-                      strokeWidth="1"
-                      x1="0"
-                      x2="700"
-                      y1="60"
-                      y2="60"
-                    ></line>
-                    <line
-                      stroke="#E2E8F0"
-                      strokeDasharray="4 4"
-                      strokeWidth="1"
-                      x1="0"
-                      x2="700"
-                      y1="100"
-                      y2="100"
-                    ></line>
-                    <line
-                      stroke="#E2E8F0"
-                      strokeWidth="1"
-                      x1="0"
-                      x2="700"
-                      y1="140"
-                      y2="140"
-                    ></line>
-                    {/*  Outflow Area / Line  */}
-                    <path
-                      d="M0,110 Q116,95 233,105 T466,70 T700,90 L700,140 L0,140 Z"
-                      fill="rgba(187, 202, 198, 0.2)"
-                    />
-                    <path
-                      d="M0,110 Q116,95 233,105 T466,70 T700,90"
-                      fill="none"
-                      stroke="#6C7A77"
-                      strokeWidth="2.5"
-                    />
-                    {/*  Inflow Area / Line (Teal)  */}
-                    <path
-                      d="M0,90 Q116,40 233,65 T466,30 T700,45 L700,140 L0,140 Z"
-                      fill="rgba(20, 184, 166, 0.12)"
-                    />
-                    <path
-                      d="M0,90 Q116,40 233,65 T466,30 T700,45"
-                      fill="none"
-                      stroke="#14B8A6"
-                      strokeWidth="2.5"
-                    />
-                    {/*  Data point callouts  */}
-                    <circle
-                      cx="233"
-                      cy="65"
-                      fill="#FFFFFF"
-                      r="4.5"
-                      stroke="#14B8A6"
-                      strokeWidth="2.5"
-                    />
-                    <circle
-                      cx="466"
-                      cy="30"
-                      fill="#FFFFFF"
-                      r="4.5"
-                      stroke="#14B8A6"
-                      strokeWidth="2.5"
-                    />
-                    <circle
-                      cx="700"
-                      cy="45"
-                      fill="#FFFFFF"
-                      r="4.5"
-                      stroke="#14B8A6"
-                      strokeWidth="2.5"
-                    />
-                  </svg>
-                </div>
-                <div className="grid grid-cols-7 text-center font-label-sm text-label-sm text-on-surface-variant pt-space-xs border-none">
-                  <span>Mon</span>
-                  <span>Tue</span>
-                  <span>Wed</span>
-                  <span>Thu</span>
-                  <span>Fri</span>
-                  <span>Sat</span>
-                  <span className="font-semibold text-primary">Today</span>
-                </div>
-              </section>
+              )}
             </main>
+
             {/*  RIGHT COLUMN: ~30% (col-span-4) Quick Module Navigation Directory  */}
             <aside className="lg:col-span-4 w-full">
               <div className="bg-surface-container-lowest rounded-xl p-space-base shadow-sm sticky top-20 flex flex-col gap-space-md">
@@ -682,252 +690,301 @@ export default function Dashboard() {
                 {/*  Navigation Group Container  */}
                 <div className="flex flex-col gap-space-md" id="directory-list">
                   {/*  Group 1: Sales  */}
-                  <div className="flex flex-col gap-space-xs">
-                    <div className="flex items-center justify-between px-space-xs py-space-2xs">
+                  <div className="flex flex-col gap-space-xs border border-surface-container/60 rounded-xl p-space-xs">
+                    <button
+                      className="w-full flex items-center justify-between px-space-xs py-space-2xs text-left cursor-pointer hover:bg-surface-container-low rounded-lg transition-colors"
+                      type="button"
+                      onClick={() => toggleSection("sales")}
+                    >
                       <span className="flex items-center gap-space-xs font-label-md text-label-md uppercase tracking-wider font-bold text-on-surface-variant">
                         <ShoppingBag className="text-[16px] text-primary" />
                         <span>Sales</span>
                       </span>
-                      <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold">
-                        3 items
-                      </span>
-                    </div>
-                    <nav className="flex flex-col gap-space-2xs">
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Sales Order
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Sale Invoice
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Receipt
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                    </nav>
+                      <div className="flex items-center gap-space-xs">
+                        <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold">
+                          3 items
+                        </span>
+                        <ChevronDown
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
+                            openSections.sales ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {openSections.sales && (
+                      <nav className="flex flex-col gap-space-2xs pt-space-xs border-t border-surface-container/40">
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="#"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Sales Order
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="#"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Sale Invoice
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="#"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Receipt
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                      </nav>
+                    )}
                   </div>
+
                   {/*  Group 2: Purchase  */}
-                  <div className="flex flex-col gap-space-xs">
-                    <div className="flex items-center justify-between px-space-xs py-space-2xs">
+                  <div className="flex flex-col gap-space-xs border border-surface-container/60 rounded-xl p-space-xs">
+                    <button
+                      className="w-full flex items-center justify-between px-space-xs py-space-2xs text-left cursor-pointer hover:bg-surface-container-low rounded-lg transition-colors"
+                      type="button"
+                      onClick={() => toggleSection("purchase")}
+                    >
                       <span className="flex items-center gap-space-xs font-label-md text-label-md uppercase tracking-wider font-bold text-on-surface-variant">
                         <Truck className="text-[16px] text-primary" />
                         <span>Purchase</span>
                       </span>
-                      <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">
-                        3 items
-                      </span>
-                    </div>
-                    <nav className="flex flex-col gap-space-2xs">
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Purchase Order
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Purchase Bill
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Payment
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                    </nav>
+                      <div className="flex items-center gap-space-xs">
+                        <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">
+                          3 items
+                        </span>
+                        <ChevronDown
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
+                            openSections.purchase ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {openSections.purchase && (
+                      <nav className="flex flex-col gap-space-2xs pt-space-xs border-t border-surface-container/40">
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/purchase-orders"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Purchase Order</span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/vendor-bills"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Purchase Bill</span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/payments"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Payment</span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                      </nav>
+                    )}
                   </div>
+
                   {/*  Group 3: Account  */}
-                  <div className="flex flex-col gap-space-xs">
-                    <div className="flex items-center justify-between px-space-xs py-space-2xs">
+                  <div className="flex flex-col gap-space-xs border border-surface-container/60 rounded-xl p-space-xs">
+                    <button
+                      className="w-full flex items-center justify-between px-space-xs py-space-2xs text-left cursor-pointer hover:bg-surface-container-low rounded-lg transition-colors"
+                      type="button"
+                      onClick={() => toggleSection("account")}
+                    >
                       <span className="flex items-center gap-space-xs font-label-md text-label-md uppercase tracking-wider font-bold text-on-surface-variant">
                         <Wallet className="text-[16px] text-primary" />
                         <span>Account</span>
                       </span>
-                      <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">
-                        7 items
-                      </span>
-                    </div>
-                    <nav className="flex flex-col gap-space-2xs">
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="/contacts/list"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Contact
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="/products/list"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Product Catalog
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Analyticals
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Analytical Budget
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="/chart-of-accounts"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Chart of Account
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="/journals"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Journals
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="/journal-entries"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Journal Entries
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                    </nav>
+                      <div className="flex items-center gap-space-xs">
+                        <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">
+                          7 items
+                        </span>
+                        <ChevronDown
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
+                            openSections.account ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {openSections.account && (
+                      <nav className="flex flex-col gap-space-2xs pt-space-xs border-t border-surface-container/40">
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/contacts/list"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Contact
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/products/list"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Product Catalog
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="#"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Analyticals
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/analytical-budget/new"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Analytical Budget
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/chart-of-accounts"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Chart of Account
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/journals"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Journals
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/journal-entries"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Journal Entries
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                      </nav>
+                    )}
                   </div>
+
                   {/*  Group 4: Report  */}
-                  <div className="flex flex-col gap-space-xs">
-                    <div className="flex items-center justify-between px-space-xs py-space-2xs">
+                  <div className="flex flex-col gap-space-xs border border-surface-container/60 rounded-xl p-space-xs">
+                    <button
+                      className="w-full flex items-center justify-between px-space-xs py-space-2xs text-left cursor-pointer hover:bg-surface-container-low rounded-lg transition-colors"
+                      type="button"
+                      onClick={() => toggleSection("report")}
+                    >
                       <span className="flex items-center gap-space-xs font-label-md text-label-md uppercase tracking-wider font-bold text-on-surface-variant">
                         <BarChart3 className="text-[16px] text-primary" />
                         <span>Report</span>
                       </span>
-                      <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold">
-                        3 items
-                      </span>
-                    </div>
-                    <nav className="flex flex-col gap-space-2xs">
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Balance Sheet
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Profit and Loss
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                      <Link
-                        className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                        to="#"
-                      >
-                        <div className="flex items-center gap-space-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                          <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                            Budget Report
-                          </span>
-                        </div>
-                        <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </Link>
-                    </nav>
+                      <div className="flex items-center gap-space-xs">
+                        <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold">
+                          3 items
+                        </span>
+                        <ChevronDown
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
+                            openSections.report ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {openSections.report && (
+                      <nav className="flex flex-col gap-space-2xs pt-space-xs border-t border-surface-container/40">
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="#"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Balance Sheet
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="#"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Profit and Loss
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/budget-report"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
+                              Budget Report
+                            </span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                      </nav>
+                    )}
                   </div>
                 </div>
                 {/*  Directory Footer Support  */}

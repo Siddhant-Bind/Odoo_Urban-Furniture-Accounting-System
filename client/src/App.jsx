@@ -19,6 +19,13 @@ import Journals from './pages/Journals';
 import NewJournal from './pages/NewJournal';
 import JournalEntries from './pages/JournalEntries';
 import NewJournalEntry from './pages/NewJournalEntry';
+import BudgetForm from './pages/BudgetForm';
+import PurchaseOrderForm from './pages/PurchaseOrderForm';
+import VendorBillForm from './pages/VendorBillForm';
+import BillPaymentForm from './pages/BillPaymentForm';
+import BudgetRevisedForm from './pages/BudgetRevisedForm';
+import BudgetReportList from './pages/BudgetReportList';
+import BudgetReportKanban from './pages/BudgetReportKanban';
 
 // Temporary placeholder for unbuilt screens
 const Placeholder = ({ title }) => (
@@ -64,15 +71,21 @@ export default function App() {
           <Route path="/journal-entries" element={<JournalEntries />} />
           <Route path="/journal-entries/new" element={<NewJournalEntry />} />
           <Route path="/analyticals" element={<Placeholder title="Analyticals" />} />
-          <Route path="/analytical-budget" element={<Placeholder title="Analytical Budget" />} />
           
           {/* Budgeting */}
-          <Route path="/budget-report" element={<Placeholder title="Budget Report" />} />
+          <Route path="/analytical-budget" element={<Navigate to="/budget-report" replace />} />
+          <Route path="/analytical-budget/new" element={<BudgetForm />} />
+          <Route path="/analytical-budget/revised" element={<BudgetRevisedForm />} />
+          <Route path="/budget-report" element={<BudgetReportList />} />
+          <Route path="/budget-report/kanban" element={<BudgetReportKanban />} />
 
           {/* Purchase Cycle */}
-          <Route path="/purchase-orders" element={<Placeholder title="Purchase Orders" />} />
-          <Route path="/vendor-bills" element={<Placeholder title="Vendor Bills" />} />
-          <Route path="/payments" element={<Placeholder title="Payments" />} />
+          <Route path="/purchase-orders" element={<PurchaseOrderForm />} />
+          <Route path="/purchase-orders/new" element={<PurchaseOrderForm />} />
+          <Route path="/vendor-bills" element={<VendorBillForm />} />
+          <Route path="/vendor-bills/new" element={<VendorBillForm />} />
+          <Route path="/payments" element={<BillPaymentForm />} />
+          <Route path="/payments/new" element={<BillPaymentForm />} />
 
           {/* Sales Cycle */}
           <Route path="/sales-orders" element={<Placeholder title="Sales Orders" />} />
@@ -90,4 +103,5 @@ export default function App() {
     </Router>
   );
 }
+
 
