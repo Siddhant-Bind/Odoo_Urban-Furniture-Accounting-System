@@ -13,10 +13,7 @@ export const payBill = async (req, res, next) => {
       return res.status(403).json({ error: 'Not authorized to pay this bill' });
     }
 
-    // In a real system, payment would also generate a journal entry (Debit Creditor, Credit Bank/Cash).
-    // For simplicity or depending on phase requirements, we might just record it.
-    // Spec says: "Record Cash/Bank payment and calculate live amount due."
-    
+    // Record the payment
     const payment = await prisma.billPayment.create({
       data: {
         billId,
@@ -26,7 +23,14 @@ export const payBill = async (req, res, next) => {
       }
     });
 
-    res.status(201).json(payment);
+    // Mark bill as PAID so the list view updates immediately
+    const updatedBill = await prisma.vendorBill.update({
+      where: { id: billId },
+      data: { status: 'PAID' },
+      include: { vendor: true, payments: true }
+    });
+
+    res.status(201).json({ payment, bill: updatedBill });
   } catch (error) {
     next(error);
   }

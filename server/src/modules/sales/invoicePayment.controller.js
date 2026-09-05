@@ -23,7 +23,14 @@ export const payInvoice = async (req, res, next) => {
       }
     });
 
-    res.status(201).json(payment);
+    // Mark invoice as PAID so the list view updates immediately
+    const updatedInvoice = await prisma.customerInvoice.update({
+      where: { id: invoiceId },
+      data: { status: 'PAID' },
+      include: { customer: true, payments: true }
+    });
+
+    res.status(201).json({ payment, invoice: updatedInvoice });
   } catch (error) {
     next(error);
   }

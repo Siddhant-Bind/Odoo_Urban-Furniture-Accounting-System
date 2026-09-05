@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AuthLayout from './layouts/AuthLayout';
 import PublicLayout from './layouts/PublicLayout';
-import { useAuth } from './context/AuthContext';
+import { useAuth as useAuthContext } from './context/AuthContext';
+import useAuth from './utils/useAuth';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -36,7 +37,8 @@ import CustomerInvoiceForm from './pages/CustomerInvoiceForm';
 import InvoiceRegister from './pages/InvoiceRegister';
 import InvoicePaymentForm from './pages/InvoicePaymentForm';
 import ProfitAndLoss from './pages/ProfitAndLoss';
-import SalesSheet from './pages/SalesSheet';
+import BalanceSheet from './pages/BalanceSheet';
+import MyInvoices from './pages/MyInvoices';
 
 // Temporary placeholder for unbuilt screens
 const Placeholder = ({ title }) => (
@@ -48,11 +50,26 @@ const Placeholder = ({ title }) => (
   </div>
 );
 
-// Auth guard: redirect unauthenticated users to /login
+// Auth guard: redirect unauthenticated users to /login, and route CONTACT users away from dashboard
 function RequireAuth({ children }) {
-  const { user, loading } = useAuth();
+  const { user: contextUser, loading } = useAuthContext();
+  const { isContact } = useAuth();
+  
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!contextUser) return <Navigate to="/login" replace />;
+  
+  // If Contact tries to access normal routes (not my-invoices or receipts), redirect them
+  const location = useLocation();
+  const path = location.pathname;
+  if (isContact && !path.startsWith('/my-invoices') && !path.startsWith('/receipts')) {
+    return <Navigate to="/my-invoices" replace />;
+  }
+
+  // If Admin/Accountant tries to access contact portal, redirect to dashboard
+  if (!isContact && path.startsWith('/my-invoices')) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
   return children;
 }
 
@@ -69,7 +86,14 @@ export default function App() {
         </Route>
 
         {/* Auth Gated Routes */}
-        <Route element={<AuthLayout />}>
+        <Route element={
+          <RequireAuth>
+            <AuthLayout />
+          </RequireAuth>
+        }>
+          {/* Contact Portal (CONTACT role only) */}
+          <Route path="/my-invoices" element={<MyInvoices />} />
+
           {/* Dashboard & Admin */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-user" element={<CreateUser />} />          
@@ -117,9 +141,8 @@ export default function App() {
           <Route path="/receipts" element={<InvoicePaymentForm />} />
 
           {/* Reports */}
-          <Route path="/balance-sheet" element={<Placeholder title="Balance Sheet" />} />
+          <Route path="/balance-sheet" element={<BalanceSheet />} />
           <Route path="/profit-and-loss" element={<ProfitAndLoss />} />
-          <Route path="/sales-sheet" element={<SalesSheet />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -128,5 +151,3 @@ export default function App() {
     </Router>
   );
 }
-
-

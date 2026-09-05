@@ -130,7 +130,7 @@ export default function Dashboard() {
                   <User className="text-on-primary text-[18px]" />
                 </div>
                 <div className="hidden xl:flex flex-col">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold">{user?.name ?? "Alex Morgan"}</span>
+                  <span className="font-label-md text-label-md text-on-surface font-semibold">{user?.name ?? "USER"}</span>
                   <span className="font-label-sm text-label-sm text-on-surface-variant">{userRole}</span>
                 </div>
                 <ChevronDown className="text-on-surface-variant text-[20px]" />
@@ -138,13 +138,10 @@ export default function Dashboard() {
               {profileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-surface-container-lowest border border-surface-container rounded-xl shadow-lg z-50 overflow-hidden py-1">
                   <div className="px-4 py-2 border-b border-surface-container">
-                    <p className="font-semibold text-sm text-on-surface">{user?.name ?? "Alex Morgan"}</p>
+                    <p className="font-semibold text-sm text-on-surface">{user?.name ?? "USER"}</p>
                     <p className="text-xs text-on-surface-variant">{user?.email ?? ""}</p>
                   </div>
-                  <button onClick={() => setProfileOpen(false)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer">
-                    <User className="w-4 h-4 text-on-surface-variant" />
-                    <span>Profile</span>
-                  </button>
+
                   <div className="h-px bg-surface-container"></div>
                   <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/30 transition-colors cursor-pointer">
                     <LogOut className="w-4 h-4" />
@@ -172,25 +169,29 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
-                  <RefreshCw className="text-[16px] text-primary" />
-                  <span>
-                    Ledger snapshot synchronized 2 minutes ago • Single-tenant
-                    node us-east-4
-                  </span>
+
                 </div>
               </div>
               {/*  Quick Action Controls & View Mode  */}
               <div className="flex items-center gap-space-sm self-start lg:self-auto">
+                {userRole === "ADMIN" && (
+                  <Link
+                    to="/create-user"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-full hover:opacity-90 transition-opacity font-label-sm font-semibold shadow-sm mr-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create User</span>
+                  </Link>
+                )}
                 <div
                   className="inline-flex p-space-2xs bg-surface-container rounded-full"
                   role="tablist"
                 >
                   <button
-                    className={`px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold transition-all inline-flex items-center gap-space-xs cursor-pointer ${
-                      viewMode === "list"
-                        ? "bg-surface-container-lowest text-on-surface shadow-sm"
-                        : "text-on-surface-variant hover:text-on-surface"
-                    }`}
+                    className={`px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold transition-all inline-flex items-center gap-space-xs cursor-pointer ${viewMode === "list"
+                      ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                      : "text-on-surface-variant hover:text-on-surface"
+                      }`}
                     id="btn-list-view"
                     type="button"
                     onClick={() => setViewMode("list")}
@@ -199,11 +200,10 @@ export default function Dashboard() {
                     <span>List Grid</span>
                   </button>
                   <button
-                    className={`px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold transition-all inline-flex items-center gap-space-xs cursor-pointer ${
-                      viewMode === "kanban"
-                        ? "bg-surface-container-lowest text-on-surface shadow-sm"
-                        : "text-on-surface-variant hover:text-on-surface"
-                    }`}
+                    className={`px-space-md py-space-xs rounded-full font-label-md text-label-md font-semibold transition-all inline-flex items-center gap-space-xs cursor-pointer ${viewMode === "kanban"
+                      ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                      : "text-on-surface-variant hover:text-on-surface"
+                      }`}
                     id="btn-kanban-view"
                     type="button"
                     onClick={() => setViewMode("kanban")}
@@ -267,8 +267,9 @@ export default function Dashboard() {
                             </span>
                           </div>
                           <button
-                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors"
+                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors cursor-pointer"
                             type="button"
+                            onClick={() => navigate('/sales-orders/new')}
                           >
                             <Plus className="text-[14px]" />
                             <span>New</span>
@@ -279,7 +280,7 @@ export default function Dashboard() {
                             Pipeline Volume
                           </span>
                           <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
-                            ${salesTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₹{salesTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </div>
                         {/*  Segmented Status Badges  */}
@@ -315,7 +316,7 @@ export default function Dashboard() {
                                 {order.orderNumber} • {order.customerName}
                               </span>
                               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                                ${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                ₹{Number(order.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
                             </div>
                             <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
@@ -338,8 +339,9 @@ export default function Dashboard() {
                             </span>
                           </div>
                           <button
-                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors"
+                            className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary transition-colors cursor-pointer"
                             type="button"
+                            onClick={() => navigate('/purchase-orders/new')}
                           >
                             <Plus className="text-[14px]" />
                             <span>New</span>
@@ -350,7 +352,7 @@ export default function Dashboard() {
                             Payable Committed
                           </span>
                           <div className="font-numeric-lg text-numeric-lg text-on-surface font-bold mt-space-2xs">
-                            ${purchaseTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₹{purchaseTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </div>
                         {/*  Segmented Status Badges  */}
@@ -386,7 +388,7 @@ export default function Dashboard() {
                                 {order.orderNumber} • {order.vendorName}
                               </span>
                               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                                ${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                ₹{Number(order.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
                             </div>
                             <span className="px-space-xs py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-medium">
@@ -408,13 +410,13 @@ export default function Dashboard() {
                               Budget Reports
                             </span>
                           </div>
-                          <button
+                          <Link
+                            to="/budget-report"
                             className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold hover:bg-secondary-container transition-colors"
-                            type="button"
                           >
                             <span>Report</span>
                             <ChevronRight className="text-[14px]" />
-                          </button>
+                          </Link>
                         </div>
                         <div className="mt-space-2xs">
                           <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
@@ -422,10 +424,13 @@ export default function Dashboard() {
                           </span>
                           <div className="flex items-baseline gap-space-xs mt-space-2xs">
                             <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                              78.4%
-                            </span>
-                            <span className="font-body-sm text-body-sm text-secondary font-semibold">
-                              +3.2% vs Q1
+                              {budgets.length > 0
+                                ? (
+                                  (budgets.reduce((sum, b) => sum + Number(b.achievedAmount || 0), 0) /
+                                    (budgets.reduce((sum, b) => sum + Number(b.committedAmount || 0), 0) || 1)) *
+                                  100
+                                ).toFixed(1)
+                                : "0.0"}%
                             </span>
                           </div>
                         </div>
@@ -435,72 +440,43 @@ export default function Dashboard() {
                             className="px-space-sm py-space-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm text-label-sm font-semibold"
                             type="button"
                           >
-                            Achieved (3)
-                          </button>
-                          <button
-                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                            type="button"
-                          >
-                            Budget (2)
-                          </button>
-                          <button
-                            className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm font-medium transition-colors"
-                            type="button"
-                          >
-                            Commit (4)
+                            All ({budgets.length})
                           </button>
                         </div>
                       </div>
                       {/*  Micro Metric Progress Bars  */}
                       <div className="flex flex-col gap-space-sm mt-space-sm pt-space-sm">
-                        <div className="flex flex-col gap-space-2xs">
-                          <div className="flex justify-between font-label-sm text-label-sm">
-                            <span className="text-on-surface font-medium">
-                              Q2 Operations
-                            </span>
-                            <span className="text-on-surface-variant font-semibold">
-                              84%
-                            </span>
-                          </div>
-                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary-container rounded-full"
-                              style={{ width: "84%" }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-space-2xs">
-                          <div className="flex justify-between font-label-sm text-label-sm">
-                            <span className="text-on-surface font-medium">
-                              Store Equipment
-                            </span>
-                            <span className="text-on-surface-variant font-semibold">
-                              62%
-                            </span>
-                          </div>
-                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary-container rounded-full"
-                              style={{ width: "62%" }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-space-2xs">
-                          <div className="flex justify-between font-label-sm text-label-sm">
-                            <span className="text-on-surface font-medium">
-                              Tech Infrastructure
-                            </span>
-                            <span className="text-on-surface-variant font-semibold">
-                              91%
-                            </span>
-                          </div>
-                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-error rounded-full"
-                              style={{ width: "91%" }}
-                            ></div>
-                          </div>
-                        </div>
+                        {loading ? (
+                          <div className="text-center text-sm text-on-surface-variant">Loading budgets...</div>
+                        ) : budgets.length === 0 ? (
+                          <div className="text-center text-sm text-on-surface-variant">No active budgets</div>
+                        ) : (
+                          budgets.slice(0, 3).map((budget) => {
+                            const achieved = Number(budget.achievedAmount || 0);
+                            const committed = Number(budget.committedAmount || 0);
+                            const progress = committed > 0 ? Math.min((achieved / committed) * 100, 100) : 0;
+                            const isOverBudget = achieved > committed;
+
+                            return (
+                              <div key={budget.id} className="flex flex-col gap-space-2xs">
+                                <div className="flex justify-between font-label-sm text-label-sm">
+                                  <span className="text-on-surface font-medium truncate max-w-[120px]">
+                                    {budget.budgetName}
+                                  </span>
+                                  <span className={`font-semibold ${isOverBudget ? "text-error" : "text-on-surface-variant"}`}>
+                                    {progress.toFixed(0)}%
+                                  </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${isOverBudget ? "bg-error" : "bg-primary-container"}`}
+                                    style={{ width: `${progress}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   </div>
@@ -523,11 +499,11 @@ export default function Dashboard() {
                           Available Cash Float
                         </span>
                         <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                          ${Number(bankAccount.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          ₹{Number(bankAccount.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                         <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
                           <CheckCircle className="text-[14px]" />
-                          <span>Reconciled through 08:00 EST</span>
+                          <span>Reconciled through 08:00 IST</span>
                         </span>
                       </div>
                       <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
@@ -580,7 +556,7 @@ export default function Dashboard() {
                             <span className="px-space-xs py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-label-sm text-label-sm">{order.status}</span>
                           </div>
                           <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">{order.customerName}</p>
-                          <div className="mt-space-xs font-numeric-md font-bold text-primary">${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                          <div className="mt-space-xs font-numeric-md font-bold text-primary">₹{Number(order.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
                         </div>
                       ))}
                     </div>
@@ -606,7 +582,7 @@ export default function Dashboard() {
                             <span className="px-space-xs py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm">{order.status}</span>
                           </div>
                           <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">{order.vendorName}</p>
-                          <div className="mt-space-xs font-numeric-md font-bold text-secondary">${Number(order.totalAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                          <div className="mt-space-xs font-numeric-md font-bold text-secondary">₹{Number(order.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
                         </div>
                       ))}
                     </div>
@@ -629,7 +605,7 @@ export default function Dashboard() {
                           <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Synced</span>
                         </div>
                         <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Primary Operating Account</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">${Number(bankAccount.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">₹{Number(bankAccount.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
                       </div>
                       <div className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
                         <div className="flex items-center justify-between">
@@ -637,7 +613,7 @@ export default function Dashboard() {
                           <span className="px-space-xs py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm">Active</span>
                         </div>
                         <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Petty Cash / Vault</p>
-                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">${Number(cashAccount.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                        <div className="mt-space-xs font-numeric-md font-bold text-on-surface">₹{Number(cashAccount.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
                       </div>
                     </div>
                   </div>
@@ -690,9 +666,8 @@ export default function Dashboard() {
                           3 items
                         </span>
                         <ChevronDown
-                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
-                            openSections.sales ? "rotate-180" : ""
-                          }`}
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${openSections.sales ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </button>
@@ -748,9 +723,8 @@ export default function Dashboard() {
                           3 items
                         </span>
                         <ChevronDown
-                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
-                            openSections.purchase ? "rotate-180" : ""
-                          }`}
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${openSections.purchase ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </button>
@@ -806,9 +780,8 @@ export default function Dashboard() {
                           7 items
                         </span>
                         <ChevronDown
-                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
-                            openSections.account ? "rotate-180" : ""
-                          }`}
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${openSections.account ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </button>
@@ -915,12 +888,11 @@ export default function Dashboard() {
                       </span>
                       <div className="flex items-center gap-space-xs">
                         <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold">
-                          4 items
+                          3 items
                         </span>
                         <ChevronDown
-                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
-                            openSections.report ? "rotate-180" : ""
-                          }`}
+                          className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${openSections.report ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </button>
@@ -928,7 +900,7 @@ export default function Dashboard() {
                       <nav className="flex flex-col gap-space-2xs pt-space-xs border-t border-surface-container/40">
                         <Link
                           className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                          to="#"
+                          to="/balance-sheet"
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
@@ -943,16 +915,6 @@ export default function Dashboard() {
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
                             <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Profit and Loss</span>
-                          </div>
-                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                        </Link>
-                        <Link
-                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                          to="/sales-sheet"
-                        >
-                          <div className="flex items-center gap-space-sm">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Sales Sheet</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>

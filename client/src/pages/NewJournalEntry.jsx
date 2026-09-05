@@ -56,7 +56,7 @@ export default function NewJournalEntry() {
             <div className="flex items-center gap-2 pl-3 border-l border-[#E2E8F0]">
               <div className="w-8 h-8 rounded-full bg-[#14B8A6] flex items-center justify-center text-white text-sm font-bold">A</div>
               <div className="hidden sm:block">
-                <div className="text-xs font-semibold text-[#0F172A]">Alex Morgan</div>
+                <div className="text-xs font-semibold text-[#0F172A]">USER</div>
                 <div className="text-[11px] text-[#64748B]">Administrator</div>
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function NewJournalEntry() {
                   className="w-full h-11 px-4 pr-10 rounded-xl border border-[#E2E8F0] text-sm text-[#0F172A] focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 appearance-none bg-white cursor-pointer transition-all"
                 >
                   <option value="">Select journal...</option>
-                  {journals.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
+                  {journals.map(j => <option key={j.id} value={j.id}>{j.journalName || j.name}</option>)}
                 </select>
                 <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none" />
               </div>
@@ -180,7 +180,7 @@ export default function NewJournalEntry() {
                           className="w-full h-9 px-3 pr-8 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:border-[#14B8A6] focus:outline-none appearance-none bg-white cursor-pointer"
                         >
                           <option value="">Select account...</option>
-                          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                          {accounts.map(a => <option key={a.id} value={a.id}>{a.accountName || a.name}</option>)}
                         </select>
                         <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none" />
                       </div>

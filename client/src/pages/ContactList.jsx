@@ -1,276 +1,183 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, ChevronDown, ChevronRight, LayoutDashboard, LayoutList, MoreVertical, Plus, Search, Settings } from "lucide-react";
+import {
+  ArrowLeft, Bell, ChevronDown, ChevronRight, LayoutDashboard,
+  LayoutList, MoreVertical, Plus, Search, Settings,
+} from "lucide-react";
 import { fetchClient } from "../utils/api";
+import useAuth from "../utils/useAuth";
+
+const TYPE_LABEL = {
+  CUSTOMER: "Customer",
+  VENDOR: "Vendor",
+  BOTH: "Vendor & Customer",
+};
+const TYPE_COLOR = {
+  CUSTOMER: "bg-blue-50 text-blue-700",
+  VENDOR: "bg-amber-50 text-amber-700",
+  BOTH: "bg-purple-50 text-purple-700",
+};
 
 export default function ContactList() {
   const navigate = useNavigate();
+  const { isAdmin, isAccountant } = useAuth();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
 
   useEffect(() => {
-    fetchClient('/contacts')
-      .then(data => {
-        setContacts(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+    fetchClient("/contacts")
+      .then((data) => { setContacts(data); setLoading(false); })
+      .catch((err) => { console.error(err); setLoading(false); });
   }, []);
+
+  const filtered = contacts.filter((c) => {
+    const matchType =
+      typeFilter === "ALL" ||
+      c.type === typeFilter ||
+      (typeFilter === "CUSTOMER" && c.type === "BOTH") ||
+      (typeFilter === "VENDOR" && c.type === "BOTH");
+    const matchSearch =
+      (c.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (c.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (c.companyName || "").toLowerCase().includes(search.toLowerCase());
+    return matchType && matchSearch;
+  });
 
   return (
     <>
-      {/*  TopNavBar (Shared Component)  */}
-      <header className="bg-surface-container-lowest dark:bg-surface-container-lowest docked full-width top-0 h-16 border-b border-outline-variant dark:border-outline-variant shadow-sm z-50 fixed w-full">
-        <div className="flex items-center justify-between px-gutter-desktop w-full max-w-container-max mx-auto h-16">
+      {/* TopNavBar */}
+      <header className="bg-surface-container-lowest border-b border-outline-variant shadow-sm z-50 fixed w-full top-0 h-16">
+        <div className="flex items-center justify-between px-6 lg:px-10 w-full max-w-[120rem] mx-auto h-16">
           <div className="flex items-center gap-8">
-            {/*  Brand Logo Placeholder  */}
-            <div className="w-[120px] h-[36px] bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg flex items-center justify-center">
-              <span className="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">
-                UrbanMart
-              </span>
+            <div className="w-[120px] h-[36px] bg-surface-container-low rounded-lg flex items-center justify-center border border-outline-variant">
+              <span className="font-bold text-primary text-sm tracking-wide uppercase">UrbanMart</span>
             </div>
-            {/*  Navigation Links (Web only)  */}
-            <nav className="hidden md:flex items-center gap-6 h-full pt-5">
-              <Link
-                className="text-on-surface-variant dark:text-on-surface-variant font-medium pb-5 hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 cursor-pointer active:opacity-80 font-body-md text-body-md"
-                to="/sales-orders"
-              >
-                Sales
-              </Link>
-              <Link
-                className="text-on-surface-variant dark:text-on-surface-variant font-medium pb-5 hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 cursor-pointer active:opacity-80 font-body-md text-body-md"
-                to="/purchase-orders"
-              >
-                Purchase
-              </Link>
-              {/*  Active State  */}
-              <Link
-                aria-current="page"
-                className="text-primary dark:text-primary-fixed-dim font-semibold border-b-2 border-primary dark:border-primary-fixed-dim pb-5 hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 cursor-pointer active:opacity-80 font-body-md text-body-md"
-                to="/contacts"
-              >
-                Account
-              </Link>
-              <Link
-                className="text-on-surface-variant dark:text-on-surface-variant font-medium pb-5 hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 cursor-pointer active:opacity-80 font-body-md text-body-md"
-                to="/balance-sheet"
-              >
-                Report
-              </Link>
+            <nav className="hidden md:flex items-center h-full pt-5 gap-6">
+              {(isAdmin || isAccountant) && (
+                <Link className="text-on-surface-variant font-medium pb-5 hover:text-primary transition-colors text-sm" to="/sales-orders">Sales</Link>
+              )}
+              {(isAdmin || isAccountant) && (
+                <Link className="text-on-surface-variant font-medium pb-5 hover:text-primary transition-colors text-sm" to="/purchase-orders">Purchase</Link>
+              )}
+              <Link aria-current="page" className="text-primary font-semibold border-b-2 border-primary pb-5 text-sm" to="/contacts">Account</Link>
+              {(isAdmin || isAccountant) && (
+                <Link className="text-on-surface-variant font-medium pb-5 hover:text-primary transition-colors text-sm" to="/balance-sheet">Report</Link>
+              )}
             </nav>
           </div>
-          {/*  Trailing Actions & Profile  */}
           <div className="flex items-center gap-4">
-            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 font-body-md text-body-md">
-              Help
-            </button>
-            <div className="flex items-center gap-2">
-              <button className="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container cursor-pointer active:opacity-80">
-                <Bell className="text-[20px]" />
-              </button>
-              <button className="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container cursor-pointer active:opacity-80">
-                <Settings className="text-[20px]" />
-              </button>
-            </div>
-            {/*  Profile Area  */}
-            <div className="flex items-center gap-3 pl-4 border-l border-outline-variant">
-              <div className="text-right hidden sm:block">
-                <div className="font-label-md text-label-md text-on-surface">
-                  Alex Morgan
-                </div>
-                <div className="font-body-sm text-body-sm text-on-surface-variant">
-                  Administrator
-                </div>
-              </div>
-              <img
-                alt="User Profile"
-                className="w-8 h-8 rounded-full object-cover border border-outline-variant"
-                data-alt="Professional corporate headshot of a young administrator in a bright modern office setting. Cool color palette with soft natural lighting."
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCF5pZ-UYgvXhSpZWkA4bvatPG-mT_Hn_41WYYqK_7-QXU443TtkjJDOVjfPDfiArWgNUBiHleBEFvWoL-qqHVMtmvnIkeoZQLUSD3DoKqRe5rcrIKFB8ZPGLohQ5VfWheTOXU7gcBaeshIZ81CTVCpFCoNxpAC6QY9WSbRqZ_eX0efICRmkB9UVUqcfPzU3bvIsarVW-slIuPNREeH39fKB1iFV7tjjBhDi0knCFHrYZAIYIQmdDEm6waWLDcjzSjZjUOSmjBz0E0H"
-              />
-            </div>
+            <button className="text-on-surface-variant hover:text-primary p-2 rounded-full hover:bg-surface-container transition-colors"><Bell size={18} /></button>
+            <button className="text-on-surface-variant hover:text-primary p-2 rounded-full hover:bg-surface-container transition-colors"><Settings size={18} /></button>
           </div>
         </div>
       </header>
-      {/*  Main Content Area  */}
-      <main className="flex-grow pt-24 pb-12 px-gutter-mobile md:px-gutter-desktop w-full max-w-container-max mx-auto">
-        {/*  Header Section  */}
-        <div className="mb-8">
-          {/*  Breadcrumbs  */}
-          <nav className="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant mb-4">
-            <Link
-              className="hover:text-primary transition-colors flex items-center gap-1"
-              to="/dashboard"
-            >
-              <ArrowLeft className="text-[16px]" />
-              Back to Dashboard
-            </Link>
-            <span>/</span>
-            <Link
-              className="hover:text-primary transition-colors"
-              to="/contacts"
-            >
-              Account
-            </Link>
-            <span>/</span>
-            <span className="text-on-surface font-medium">
-              Contacts Directory
+
+      <main className="flex-grow pt-24 pb-12 px-6 md:px-10 w-full max-w-[120rem] mx-auto">
+        <nav className="flex items-center gap-2 text-sm text-on-surface-variant mb-4">
+          <Link className="hover:text-primary flex items-center gap-1" to="/dashboard"><ArrowLeft size={15} /> Back to Dashboard</Link>
+          <span>/</span>
+          <span className="text-on-surface font-medium">Contacts</span>
+        </nav>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-2xl font-bold text-on-surface">Contacts</h1>
+            <span className="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full text-xs border border-outline-variant">
+              {filtered.length} of {contacts.length}
             </span>
-          </nav>
-          {/*  Title & Actions Row  */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-baseline gap-3">
-              <h1 className="font-display text-display text-on-surface">
-                Contacts
-              </h1>
-              <span className="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full font-label-md text-label-md border border-outline-variant">
-                {contacts.length} Contacts
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {/*  Secondary Button  */}
-              <button
-                onClick={() => navigate(-1)}
-                className="rounded-full border-[1.5px] border-primary-container text-[#0F766E] bg-transparent px-5 py-2 font-label-md text-label-md hover:bg-[#CCFBF1]/50 transition-colors"
-              >
-                Back
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="rounded-full border-[1.5px] border-primary text-primary bg-transparent px-5 py-2 text-sm font-medium hover:bg-primary/10 transition-colors">
+              Back
+            </button>
+            {(isAdmin || isAccountant) && (
+              <button onClick={() => navigate("/contacts/new")} className="rounded-full bg-primary text-on-primary px-5 py-2 text-sm font-semibold hover:bg-primary/90 flex items-center gap-2 shadow-sm transition-all">
+                <Plus size={16} /> New Contact
               </button>
-              {/*  Primary Button  */}
-              <button
-                onClick={() => navigate("/contacts/new")}
-                className="rounded-full bg-primary-container text-white px-5 py-2 font-label-md text-label-md font-semibold hover:bg-[#0F766E] active:ring-2 active:ring-[#99F6E4] active:ring-inset transition-all flex items-center gap-2"
-              >
-                <Plus className="text-[18px]" />
-                New Contact
-              </button>
-            </div>
+            )}
           </div>
         </div>
-        {/*  Control Bar  */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 mb-6 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between relative z-10">
-          {/*  Search  */}
+
+        {/* Control Bar */}
+        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 mb-6 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={16} />
             <input
-              className="w-full h-10 pl-10 pr-4 rounded-full bg-white border border-[#E2E8F0] font-body-md text-body-md text-on-surface focus:border-primary-container focus:ring-0 focus:shadow-[0_0_0_3px_rgba(20,184,166,0.15)] transition-shadow"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 rounded-full bg-surface-container-lowest border border-outline-variant text-sm text-on-surface focus:border-primary focus:ring-0 outline-none transition-all"
               placeholder="Search contacts by name, email, company..."
-              type="text"
             />
           </div>
-          {/*  Filters & Views  */}
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-            {/*  Dropdown 1  */}
-            <div className="relative">
-              <button className="h-10 px-4 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-body-md text-on-surface flex items-center gap-2 hover:bg-surface-container-low transition-colors whitespace-nowrap">
-                All Types
-                <ChevronDown className="text-[18px] text-on-surface-variant" />
-              </button>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            {/* Type filter */}
+            <div className="flex bg-surface-container-low rounded-full p-1 border border-outline-variant gap-1">
+              {["ALL", "CUSTOMER", "VENDOR", "BOTH"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTypeFilter(t)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${typeFilter === t ? "bg-surface shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface"}`}
+                >
+                  {t === "ALL" ? "All" : t === "BOTH" ? "Both" : t.charAt(0) + t.slice(1).toLowerCase()}
+                </button>
+              ))}
             </div>
-            {/*  Dropdown 2  */}
-            <div className="relative">
-              <button className="h-10 px-4 rounded-lg bg-white border border-[#E2E8F0] font-body-md text-body-md text-on-surface flex items-center gap-2 hover:bg-surface-container-low transition-colors whitespace-nowrap">
-                Status: Active
-                <ChevronDown className="text-[18px] text-on-surface-variant" />
-              </button>
-            </div>
-            {/*  View Toggles  */}
-            <div className="flex items-center bg-[#F1F5F9] rounded-lg p-1 border border-[#E2E8F0] ml-auto md:ml-2">
-              <button
-                aria-label="List View"
-                onClick={() => navigate("/contacts/list")}
-                className="p-1.5 rounded bg-white shadow-sm text-primary-container flex items-center justify-center"
-              >
-                <LayoutList className="text-[20px]" />
-              </button>
-              <button
-                aria-label="Kanban View"
-                onClick={() => navigate("/contacts/kanban")}
-                className="p-1.5 rounded text-[#64748B] hover:text-on-surface transition-colors flex items-center justify-center"
-              >
-                <LayoutDashboard className="text-[20px]" />
-              </button>
+            <div className="flex items-center bg-surface-container-low rounded-lg p-1 border border-outline-variant ml-auto">
+              <button onClick={() => navigate("/contacts")} className="p-1.5 rounded bg-surface shadow-sm text-primary"><LayoutList size={18} /></button>
+              <button onClick={() => navigate("/contacts/kanban")} className="p-1.5 rounded text-on-surface-variant hover:text-on-surface"><LayoutDashboard size={18} /></button>
             </div>
           </div>
         </div>
-        {/*  Data Table Card (Level 1 Elevation)  */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-[0_1px_3px_0_rgba(15,23,42,0.04),0_1px_2px_-1px_rgba(15,23,42,0.03)] overflow-hidden">
+
+        {/* Table */}
+        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
-                  <th className="p-4 w-12 text-center">
-                    <input
-                      className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
-                      type="checkbox"
-                    />
-                  </th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                    Company
-                  </th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="p-4 w-16 text-center"></th>
+                <tr className="border-b border-outline-variant bg-surface-container-low/50">
+                  <th className="p-4 w-12 text-center"><input className="w-[18px] h-[18px] rounded border-outline-variant cursor-pointer" type="checkbox" /></th>
+                  <th className="p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Contact</th>
+                  <th className="p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Email</th>
+                  <th className="p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Phone</th>
+                  <th className="p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Company</th>
+                  <th className="p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Type</th>
+                  <th className="p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Status</th>
+                  <th className="p-4 w-12"></th>
                 </tr>
               </thead>
-              <tbody className="font-body-md text-body-md divide-y divide-[#E2E8F0]">
+              <tbody className="text-sm divide-y divide-outline-variant">
                 {loading ? (
-                  <tr><td colSpan="8" className="p-4 text-center text-[#64748B]">Loading contacts...</td></tr>
-                ) : contacts.map(c => {
-                  const initials = c.name ? c.name.substring(0, 2).toUpperCase() : 'CO';
-                  const isVendor = c.isVendor;
-                  const roleStr = c.isVendor && c.isCustomer ? "Vendor & Customer" : c.isVendor ? "Vendor" : "Customer";
-                  
+                  <tr><td colSpan="8" className="p-8 text-center text-on-surface-variant">Loading contacts...</td></tr>
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan="8" className="p-8 text-center text-on-surface-variant">No contacts found</td></tr>
+                ) : filtered.map((c) => {
+                  const initials = c.name ? c.name.substring(0, 2).toUpperCase() : "CO";
                   return (
-                    <tr key={c.id} className="hover:bg-[#CCFBF1]/30 transition-colors group">
-                      <td className="p-4 text-center">
-                        <input
-                          className="w-[18px] h-[18px] rounded border-[#CBD5E1] text-primary-container focus:ring-primary-container cursor-pointer"
-                          type="checkbox"
-                        />
-                      </td>
+                    <tr key={c.id} className="hover:bg-primary/5 transition-colors group cursor-pointer" onClick={() => navigate(`/contacts/${c.id}`)}>
+                      <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}><input className="w-[18px] h-[18px] rounded border-outline-variant cursor-pointer" type="checkbox" /></td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#E5EEFF] text-[#006B5F] flex items-center justify-center font-bold border border-[#E2E8F0]">
+                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">
                             {initials}
                           </div>
-                          <span className="font-semibold text-on-surface">
-                            {c.name}
-                          </span>
+                          <span className="font-semibold text-on-surface">{c.name}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-[#64748B]">{c.email}</td>
-                      <td className="p-4 text-[#64748B]">{c.phone}</td>
-                      <td className="p-4 text-on-surface">{c.companyName}</td>
+                      <td className="p-4 text-on-surface-variant">{c.email || "—"}</td>
+                      <td className="p-4 text-on-surface-variant">{c.phone || "—"}</td>
+                      <td className="p-4 text-on-surface">{c.companyName || "—"}</td>
                       <td className="p-4">
-                        <span className="bg-[#F1F5F9] text-[#64748B] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                          {roleStr}
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${TYPE_COLOR[c.type] || "bg-surface-container text-on-surface"}`}>
+                          {TYPE_LABEL[c.type] || c.type || "—"}
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="bg-[#CCFBF1] text-[#0F766E] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wide">
-                          Active
-                        </span>
+                        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold">Active</span>
                       </td>
-                      <td className="p-4 text-center text-[#64748B]">
-                        <button className="p-1 rounded-full hover:bg-[#E2E8F0] transition-colors group-hover:text-primary-container">
-                          <MoreVertical className="text-[20px]" />
-                        </button>
+                      <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <button className="p-1 rounded-full hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"><MoreVertical size={16} className="text-on-surface-variant" /></button>
                       </td>
                     </tr>
                   );
@@ -278,54 +185,13 @@ export default function ContactList() {
               </tbody>
             </table>
           </div>
-          {/*  Footer / Pagination within Card  */}
-          <div className="border-t border-[#E2E8F0] bg-[#FFFFFF] p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <span className="font-body-sm text-body-sm text-[#64748B]">
-                Showing 1-{contacts.length} of {contacts.length} contacts
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="font-body-sm text-body-sm text-[#64748B]">
-                  Rows per page:
-                </span>
-                <select className="h-8 rounded bg-white border border-[#E2E8F0] font-body-sm text-body-sm text-on-surface focus:border-primary-container focus:ring-0 cursor-pointer">
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-              </div>
-            </div>
+          <div className="border-t border-outline-variant bg-surface-container-lowest p-4 flex items-center justify-between text-sm text-on-surface-variant">
+            <span>Showing {filtered.length} of {contacts.length} contacts</span>
             <div className="flex items-center gap-2">
-              <button
-                className="w-8 h-8 rounded-full border border-[#E2E8F0] flex items-center justify-center text-[#64748B] hover:bg-[#F1F5F9] transition-colors disabled:opacity-50"
-                disabled=""
-              >
-                <ArrowLeft className="text-[18px]" />
-              </button>
-              <button className="w-8 h-8 rounded-full bg-primary-container text-white font-label-md text-label-md flex items-center justify-center">
-                1
-              </button>
-              <button className="w-8 h-8 rounded-full text-[#64748B] hover:bg-[#F1F5F9] font-label-md text-label-md flex items-center justify-center transition-colors">
-                2
-              </button>
-              <button className="w-8 h-8 rounded-full text-[#64748B] hover:bg-[#F1F5F9] font-label-md text-label-md flex items-center justify-center transition-colors">
-                3
-              </button>
-              <span className="text-[#64748B]">...</span>
-              <button className="w-8 h-8 rounded-full text-[#64748B] hover:bg-[#F1F5F9] font-label-md text-label-md flex items-center justify-center transition-colors">
-                15
-              </button>
-              <button className="w-8 h-8 rounded-full border border-[#E2E8F0] flex items-center justify-center text-[#64748B] hover:bg-[#F1F5F9] transition-colors">
-                <ChevronRight className="text-[18px]" />
-              </button>
+              <button className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container disabled:opacity-40" disabled><ArrowLeft size={14} /></button>
+              <button className="w-8 h-8 rounded-full bg-primary text-on-primary font-semibold text-xs flex items-center justify-center">1</button>
+              <button className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container"><ChevronRight size={14} /></button>
             </div>
-          </div>
-        </div>
-        {/*  Compliance / Status Footer  */}
-        <div className="mt-6 flex justify-end">
-          <div className="flex items-center gap-2 text-[#64748B] font-body-sm text-body-sm bg-white px-3 py-1.5 rounded-full border border-[#E2E8F0] shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-            Directory Sync Active
           </div>
         </div>
       </main>

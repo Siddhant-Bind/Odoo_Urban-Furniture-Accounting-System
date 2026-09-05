@@ -3,11 +3,12 @@ import { Plus, Search, Filter, ArrowLeft, Clock, CheckCircle } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { fetchClient } from "../utils/api";
 
-const STATUS_TABS = ["All", "DRAFT", "POSTED", "CANCELLED"];
-const STATUS_LABEL = { DRAFT: "Draft", POSTED: "Posted", CANCELLED: "Cancelled" };
+const STATUS_TABS = ["All", "DRAFT", "POSTED", "PAID", "CANCELLED"];
+const STATUS_LABEL = { DRAFT: "Draft", POSTED: "Posted", PAID: "Paid", CANCELLED: "Cancelled" };
 const STATUS_COLOR = {
   DRAFT: "bg-yellow-100 text-yellow-800",
   POSTED: "bg-blue-100 text-blue-800",
+  PAID: "bg-emerald-100 text-emerald-800",
   CANCELLED: "bg-red-100 text-red-800",
 };
 
@@ -18,12 +19,21 @@ export default function VendorBillList() {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  const loadBills = () => {
     setLoading(true);
     fetchClient("/purchase/bills")
       .then((data) => { setBills(data); setLoading(false); })
       .catch((e) => { console.error(e); setLoading(false); });
-  }, []);
+  };
+
+  useEffect(() => { loadBills(); }, []);
+
+  const handlePayNow = (e, bill) => {
+    e.stopPropagation();
+    // Optimistic update
+    setBills(prev => prev.map(b => b.id === bill.id ? { ...b, status: "PAID" } : b));
+    navigate(`/payments/new?billId=${bill.id}`);
+  };
 
   const filtered = bills.filter((b) => {
     const matchStatus = filter === "All" || b.status === filter;
@@ -54,13 +64,21 @@ export default function VendorBillList() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => navigate("/vendor-bills/new")}
-          className="px-5 py-2.5 rounded-full font-label-md font-semibold bg-primary text-on-primary hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          New Vendor Bill
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={loadBills}
+            className="px-4 py-2 rounded-full font-label-md font-semibold bg-surface-container-high text-on-surface hover:bg-surface-container transition-colors shadow-sm text-sm"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={() => navigate("/vendor-bills/new")}
+            className="px-5 py-2.5 rounded-full font-label-md font-semibold bg-primary text-on-primary hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            New Vendor Bill
+          </button>
+        </div>
       </header>
 
       {/* Tabs + Search */}
@@ -141,7 +159,7 @@ export default function VendorBillList() {
                   <tr
                     key={bill.id}
                     className="hover:bg-surface-container-low/40 transition-colors group cursor-pointer"
-                    onClick={() => navigate(`/vendor-bills/new`)}
+                    onClick={() => navigate(`/vendor-bills/${bill.id}`)}
                   >
                     <td className="px-6 py-4 font-mono text-sm font-semibold text-primary">
                       {bill.billNumber}
@@ -182,7 +200,7 @@ export default function VendorBillList() {
                     >
                       {bill.status === "POSTED" ? (
                         <button
-                          onClick={() => navigate(`/payments/new?billId=${bill.id}`)}
+                          onClick={(e) => handlePayNow(e, bill)}
                           className="px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container font-label-sm font-semibold hover:bg-primary hover:text-on-primary transition-colors opacity-0 group-hover:opacity-100"
                         >
                           Pay Now

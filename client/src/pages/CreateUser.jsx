@@ -117,7 +117,7 @@ export default function CreateUser() {
                   <User className="text-on-primary text-[18px]" />
                 </div>
                 <div className="hidden xl:flex flex-col">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold">{user?.name ?? "Alex Morgan"}</span>
+                  <span className="font-label-md text-label-md text-on-surface font-semibold">{user?.name ?? "USER"}</span>
                   <span className="font-label-sm text-label-sm text-on-surface-variant">{userRole}</span>
                 </div>
                 <ChevronDown className="text-on-surface-variant text-[20px]" />

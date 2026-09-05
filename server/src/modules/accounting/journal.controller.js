@@ -34,6 +34,27 @@ export const getJournalById = async (req, res, next) => {
   }
 };
 
+export const createJournal = async (req, res, next) => {
+  try {
+    const { journalName, journalType, defaultDebitAccountId, defaultCreditAccountId } = req.body;
+
+    const journal = await prisma.journal.create({
+      data: {
+        journalName,
+        journalType,
+        defaultDebitAccountId,
+        defaultCreditAccountId
+      }
+    });
+    res.status(201).json(journal);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'A journal with this name already exists.' });
+    }
+    next(error);
+  }
+};
+
 export const updateJournal = async (req, res, next) => {
   try {
     const { id } = req.params;

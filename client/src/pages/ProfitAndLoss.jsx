@@ -15,8 +15,7 @@ export default function ProfitAndLoss() {
   });
 
   useEffect(() => {
-    // Note: The backend currently doesn't filter by year, but we'll fetch anyway
-    fetchClient('/reports/profit-loss')
+    fetchClient(`/reports/profit-loss?year=${year}`)
       .then(data => setReportData(data))
       .catch(console.error);
   }, [year]);

@@ -48,8 +48,12 @@ export function AuthProvider({ children }) {
       // Wait, let's verify what the backend returns. In auth.controller.js, it usually returns { token, user: { id, loginId, role } }.
       // If role is passed from the form, we should check it.
       if (role) {
-        const expectedRole = role === "Admin" ? "ADMIN" : "INVOICING_USER";
-        if (data.user.role !== expectedRole && !(role === "Accountant" && data.user.role === "ACCOUNTANT")) {
+        let expectedRole;
+        if (role === "Admin") expectedRole = "ADMIN";
+        else if (role === "Contact") expectedRole = "CONTACT";
+        else expectedRole = "INVOICING_USER"; // Accountant is mapped to INVOICING_USER in db
+
+        if (data.user.role !== expectedRole) {
           return { success: false, error: `This account does not have the "${role}" role.` };
         }
       }

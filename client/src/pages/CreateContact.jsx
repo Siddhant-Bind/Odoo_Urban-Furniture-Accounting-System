@@ -1,27 +1,43 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, BadgeCheck, CheckCircle, ChevronDown, IdCard, Lock, Mail, Plus, RefreshCw, Shield, ShoppingBag, User } from "lucide-react";
-
+import useAuth from "../utils/useAuth";
 
 export default function CreateContact() {
+  const { user, isAdmin, isAccountant } = useAuth();
   const navigate = useNavigate();
+  const [imageFile, setImageFile] = React.useState(null);
+  const [imagePreview, setImagePreview] = React.useState(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const payload = {
-      name: formData.get("full_name") || "",
-      email: formData.get("email") || "",
-      phone: formData.get("phone") || "",
-      companyName: formData.get("company") || "",
-      isVendor: formData.get("role") === "vendor" || formData.get("role") === "both",
-      isCustomer: formData.get("role") === "customer" || formData.get("role") === "both",
-    };
+    const sendData = new FormData();
+    sendData.append("name", formData.get("contact_name") || "");
+    sendData.append("email", formData.get("contact_email") || "");
+    sendData.append("mobile", formData.get("contact_phone") || "");
+    sendData.append("type", (formData.get("contact_type") || "CUSTOMER").toUpperCase());
+    sendData.append("addressCity", formData.get("city") || "");
+    sendData.append("addressState", formData.get("state_province") || "");
+    sendData.append("addressPincode", formData.get("postal_code") || "");
+
+    if (imageFile) {
+      sendData.append("profileImage", imageFile);
+    }
+
     try {
       const { fetchClient } = await import('../utils/api');
       await fetchClient('/contacts', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: sendData
       });
       navigate("/contacts/list");
     } catch (err) {
@@ -75,20 +91,23 @@ export default function CreateContact() {
             </nav>
           </div>
           <div className="flex items-center gap-space-base">
-            <div className="flex items-center gap-space-xs">
-              <span className="hidden sm:inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider font-semibold">
-                <Lock className="text-[14px]" />
-                Admin
-              </span>
-              <button
-                className="inline-flex items-center gap-space-xs px-space-base py-space-sm rounded-full bg-primary-container text-on-primary font-body-md text-body-md font-semibold hover:bg-primary transition-colors"
-                type="button"
-              >
-                <Plus className="text-[18px]" />
-                <span>Create User</span>
-              </button>
-            </div>
-            <div className="h-8 w-[1px] bg-surface-container hidden sm:block"></div>
+            {isAdmin && (
+              <div className="flex items-center gap-space-xs">
+                <span className="hidden sm:inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider font-semibold">
+                  <Lock className="text-[14px]" />
+                  Admin
+                </span>
+                <button
+                  onClick={() => navigate('/create-user')}
+                  className="inline-flex items-center gap-space-xs px-space-base py-space-sm rounded-full bg-primary-container text-on-primary font-body-md text-body-md font-semibold hover:bg-primary transition-colors"
+                  type="button"
+                >
+                  <Plus className="text-[18px]" />
+                  <span>Create User</span>
+                </button>
+              </div>
+            )}
+            {isAdmin && <div className="h-8 w-[1px] bg-surface-container hidden sm:block"></div>}
             <button
               className="flex items-center gap-space-sm p-space-xs rounded-full hover:bg-surface-container-low transition-colors text-left"
               type="button"
@@ -98,10 +117,10 @@ export default function CreateContact() {
               </div>
               <div className="hidden xl:flex flex-col">
                 <span className="font-label-md text-label-md text-on-surface font-semibold">
-                  Alex Morgan
+                  {user?.loginId || "User"}
                 </span>
                 <span className="font-label-sm text-label-sm text-on-surface-variant">
-                  Admin
+                  {isAdmin ? "Admin" : isAccountant ? "Accountant" : "User"}
                 </span>
               </div>
               <ChevronDown className="text-on-surface-variant text-[20px]" />
@@ -307,14 +326,14 @@ export default function CreateContact() {
                             call
                           </span>
                           <span className="font-numeric-md text-numeric-md text-on-surface">
-                            +1
+                            +91
                           </span>
                         </div>
                         <input
                           className="w-full h-11 pl-16 pr-space-md bg-surface-container-lowest rounded-xl font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-container"
                           id="contact-phone"
                           name="contact_phone"
-                          placeholder="(555) 234-8901"
+                          placeholder="98765 43210"
                           type="tel"
                         />
                       </div>
@@ -329,10 +348,10 @@ export default function CreateContact() {
                       Contact Classification / Type{" "}
                       <span className="text-error font-bold">*</span>
                     </label>
-                    <div className="grid grid-cols-3 gap-space-md">
+                    <div className="grid grid-cols-2 gap-space-md">
                       <label className="cursor-pointer relative">
                         <input
-                          checked=""
+                          defaultChecked={true}
                           className="peer sr-only"
                           name="contact_type"
                           type="radio"
@@ -364,25 +383,6 @@ export default function CreateContact() {
                           </span>
                           <span className="font-body-sm text-body-sm text-on-surface-variant">
                             Supplier or Partner
-                          </span>
-                        </div>
-                      </label>
-                      <label className="cursor-pointer relative">
-                        <input
-                          className="peer sr-only"
-                          name="contact_type"
-                          type="radio"
-                          value="Partner"
-                        />
-                        <div className="p-space-md rounded-xl bg-surface-container-lowest peer-checked:bg-secondary-container/30 transition-all flex flex-col items-center justify-center text-center shadow-sm">
-                          <span className="material-symbols-outlined text-secondary mb-space-2xs">
-                            handshake
-                          </span>
-                          <span className="font-headline-sm text-headline-sm text-on-surface font-medium">
-                            Partner
-                          </span>
-                          <span className="font-body-sm text-body-sm text-on-surface-variant">
-                            Logistics &amp; Agency
                           </span>
                         </div>
                       </label>
@@ -430,7 +430,7 @@ export default function CreateContact() {
                         className="w-full h-11 pl-11 pr-space-md bg-surface-container-lowest rounded-xl font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-container"
                         id="street-address"
                         name="street_address"
-                        placeholder="e.g. 100 Innovation Boulevard, Suite 400"
+                        placeholder="e.g. 100 MG Road, Indiranagar"
                         type="text"
                       />
                     </div>
@@ -448,7 +448,7 @@ export default function CreateContact() {
                         className="w-full h-11 px-space-md bg-surface-container-lowest rounded-xl font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-container"
                         id="city"
                         name="city"
-                        placeholder="e.g. San Francisco"
+                        placeholder="e.g. Mumbai"
                         type="text"
                       />
                     </div>
@@ -463,7 +463,7 @@ export default function CreateContact() {
                         className="w-full h-11 px-space-md bg-surface-container-lowest rounded-xl font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-container"
                         id="state-province"
                         name="state_province"
-                        placeholder="e.g. California"
+                        placeholder="e.g. Maharashtra"
                         type="text"
                       />
                     </div>
@@ -481,7 +481,7 @@ export default function CreateContact() {
                         className="w-full h-11 px-space-md bg-surface-container-lowest rounded-xl font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-container"
                         id="postal-code"
                         name="postal_code"
-                        placeholder="e.g. 94105"
+                        placeholder="e.g. 400001"
                         type="text"
                       />
                     </div>
@@ -498,9 +498,8 @@ export default function CreateContact() {
                           id="country"
                           name="country"
                         >
-                          <option selected="" value="US">
-                            United States (USD)
-                          </option>
+                          <option value="IN">India (INR)</option>
+                          <option value="US">United States (USD)</option>
                           <option value="CA">Canada (CAD)</option>
                           <option value="GB">United Kingdom (GBP)</option>
                           <option value="EU">European Union (EUR)</option>
@@ -512,34 +511,6 @@ export default function CreateContact() {
                         </span>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </section>
-              {/*  Section 3: Visual Audit & Ledger Location Preview  */}
-              <section className="bg-surface-container-low/50 rounded-2xl p-space-lg shadow-sm">
-                <div className="flex items-center justify-between mb-space-md">
-                  <div className="flex items-center gap-space-xs">
-                    <span className="material-symbols-outlined text-secondary text-[20px]">
-                      map
-                    </span>
-                    <span className="font-headline-sm text-headline-sm text-on-surface">
-                      Regional Headquarters Preview
-                    </span>
-                  </div>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">
-                    Static Geolocation Anchor
-                  </span>
-                </div>
-                <div
-                  className="w-full h-44 bg-cover bg-center rounded-xl overflow-hidden shadow-inner flex items-end p-space-md"
-                  data-location="Financial District, San Francisco, CA"
-                  style={{}}
-                >
-                  <div className="bg-surface-container-lowest/90 backdrop-blur-md px-space-md py-space-xs rounded-lg shadow-sm flex items-center gap-space-sm">
-                    <span className="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
-                    <span className="font-label-md text-label-md text-on-surface font-medium">
-                      Auto-mapped to Pacific Western Logistics Corridor
-                    </span>
                   </div>
                 </div>
               </section>
@@ -561,8 +532,8 @@ export default function CreateContact() {
                   <div className="relative w-28 h-28 mb-space-md">
                     <img
                       className="w-28 h-28 rounded-full object-cover shadow-sm ring-4 ring-surface-container-lowest"
-                      data-alt="A clean, professional corporate studio headshot portrait with soft neutral lighting and teal rim highlights suited for a modern financial directory contact avatar."
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCBeojowF95JGaH2mcrqp6xEuwREpp3-DSaDRq1WQDFea7DCwgRpndY7sibBx2LXSppDsInJGD3JyeoDHvon4bLxhbYPZM2j9L1jkz5csSaCqI4WLqpqa_JxTGlM-Zb_OT5_CcDugueZDrMQYp4T3LN1mTniqaKPwhSzwymj6OShGCe_k0Z3_L2I1bJPgIvXnGnZTE7Etj9q69vpyg_CHJ542d_3yclrzJSpRErQuWoqFK2S7MvLBCow"
+                      alt="Contact Avatar"
+                      src={imagePreview || "https://lh3.googleusercontent.com/aida-public/AB6AXuCCBeojowF95JGaH2mcrqp6xEuwREpp3-DSaDRq1WQDFea7DCwgRpndY7sibBx2LXSppDsInJGD3JyeoDHvon4bLxhbYPZM2j9L1jkz5csSaCqI4WLqpqa_JxTGlM-Zb_OT5_CcDugueZDrMQYp4T3LN1mTniqaKPwhSzwymj6OShGCe_k0Z3_L2I1bJPgIvXnGnZTE7Etj9q69vpyg_CHJ542d_3yclrzJSpRErQuWoqFK2S7MvLBCow"}
                     />
                     <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-md">
                       <span className="material-symbols-outlined text-[18px]">
@@ -582,7 +553,7 @@ export default function CreateContact() {
                       cloud_upload
                     </span>
                     <span>Browse Files</span>
-                    <input accept="image/*" className="hidden" type="file" />
+                    <input accept="image/*" className="hidden" type="file" onChange={handleImageChange} />
                   </label>
                 </div>
               </section>
@@ -618,7 +589,7 @@ export default function CreateContact() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-headline-sm text-headline-sm text-on-surface truncate">
-                          Alex Morgan
+                          USER
                         </p>
                         <p className="font-body-sm text-body-sm text-on-surface-variant truncate">
                           Lead Administrator
@@ -646,6 +617,9 @@ export default function CreateContact() {
                         id="ledger-currency"
                         name="ledger_currency"
                       >
+                        <option value="INR">
+                          INR - Indian Rupee (₹)
+                        </option>
                         <option value="USD">
                           USD - United States Dollar ($)
                         </option>
@@ -687,37 +661,17 @@ export default function CreateContact() {
                     </label>
                     <div className="relative">
                       <span className="absolute left-space-md top-1/2 -translate-y-1/2 font-numeric-md text-numeric-md text-on-surface-variant">
-                        $
+                        ₹
                       </span>
                       <input
                         className="w-full h-11 pl-8 pr-space-md bg-surface-container-lowest rounded-xl font-numeric-md text-numeric-md text-on-surface placeholder:text-on-surface-variant/40 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-container"
                         id="credit-limit"
                         name="credit_limit"
-                        placeholder="25,000.00"
+                        placeholder="2,50,000"
                         type="text"
                       />
                     </div>
                   </div>
-                </div>
-              </section>
-              {/*  Ledger Security Audit Card  */}
-              <section className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm">
-                <div className="flex items-center gap-space-sm mb-space-sm">
-                  <Shield className="text-secondary text-[20px]" />
-                  <span className="font-headline-sm text-headline-sm text-on-surface">
-                    Audit Compliance
-                  </span>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-                  Record mutations are cryptographically signed under UrbanMart
-                  ERP specification 2.4. All updates log an immutable change
-                  vector to the global journal.
-                </p>
-                <div className="mt-space-md pt-space-sm flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
-                  <span>SHA-256 Ledger ID</span>
-                  <span className="font-mono text-primary font-semibold">
-                    0x4F...982E
-                  </span>
                 </div>
               </section>
             </div>

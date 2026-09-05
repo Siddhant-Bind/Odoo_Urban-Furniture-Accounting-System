@@ -45,7 +45,7 @@ export default function CreateProduct() {
             <div className="flex items-center gap-2 pl-3 border-l border-[#E2E8F0]">
               <div className="w-8 h-8 rounded-full bg-[#14B8A6] flex items-center justify-center text-white text-sm font-bold">A</div>
               <div className="hidden sm:block">
-                <div className="text-xs font-semibold text-[#0F172A]">Alex Morgan</div>
+                <div className="text-xs font-semibold text-[#0F172A]">USER</div>
                 <div className="text-[11px] text-[#64748B]">Administrator</div>
               </div>
             </div>

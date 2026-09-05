@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, AtSign, Eye, EyeOff, Landmark, Lock, ShieldCheck, Shield, Briefcase } from "lucide-react";
+import { ArrowRight, AtSign, Eye, EyeOff, Landmark, Lock, ShieldCheck, Shield, Briefcase, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
@@ -78,11 +78,10 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setRole("Admin")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full font-label-md font-semibold transition-all border text-sm cursor-pointer ${
-                    role === "Admin"
-                      ? "bg-primary text-on-primary border-primary shadow-sm"
-                      : "bg-surface-container-low text-on-surface-variant border-surface-container-high hover:bg-surface-container"
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full font-label-md font-semibold transition-all border text-sm cursor-pointer ${role === "Admin"
+                    ? "bg-primary text-on-primary border-primary shadow-sm"
+                    : "bg-surface-container-low text-on-surface-variant border-surface-container-high hover:bg-surface-container"
+                    }`}
                 >
                   <Shield className="w-4 h-4" />
                   Admin
@@ -90,14 +89,24 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setRole("Accountant")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full font-label-md font-semibold transition-all border text-sm cursor-pointer ${
-                    role === "Accountant"
-                      ? "bg-primary text-on-primary border-primary shadow-sm"
-                      : "bg-surface-container-low text-on-surface-variant border-surface-container-high hover:bg-surface-container"
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full font-label-md font-semibold transition-all border text-sm cursor-pointer ${role === "Accountant"
+                    ? "bg-primary text-on-primary border-primary shadow-sm"
+                    : "bg-surface-container-low text-on-surface-variant border-surface-container-high hover:bg-surface-container"
+                    }`}
                 >
                   <Briefcase className="w-4 h-4" />
                   Accountant
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("Contact")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full font-label-md font-semibold transition-all border text-sm cursor-pointer ${role === "Contact"
+                    ? "bg-primary text-on-primary border-primary shadow-sm"
+                    : "bg-surface-container-low text-on-surface-variant border-surface-container-high hover:bg-surface-container"
+                    }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Contact
                 </button>
               </div>
 
@@ -175,38 +184,18 @@ export default function Login() {
                 </Link>
               </div>
 
-              {/* Test credentials hint */}
-              <div className="mt-4 px-4 py-2 rounded-lg bg-surface-container-low border border-surface-container text-xs text-on-surface-variant text-left w-full">
-                <p className="font-semibold mb-1 text-on-surface">Demo credentials:</p>
-                <p>Admin: <span className="font-mono">admin</span> / <span className="font-mono">Password@123</span></p>
-                <p>Accountant: <span className="font-mono">invoicing.user1</span> / <span className="font-mono">Password@123</span></p>
-              </div>
 
-              <div className="mt-space-xl flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant">
-                <ShieldCheck className="text-primary text-[15px]" />
-                <span className="font-label-sm text-label-sm tracking-wide">SOC-2 Type II Certified • 256-bit Encryption</span>
-              </div>
+
             </div>
 
-            <div className="mt-space-md flex items-center justify-between px-space-xs text-on-surface-variant font-label-sm text-label-sm">
-              <span className="flex items-center gap-space-2xs text-tertiary">
-                <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse inline-block"></span>
-                Operational Systems Online
-              </span>
-              <span className="opacity-70 font-numeric-md text-label-sm">v4.18.2</span>
-            </div>
+
           </div>
         </div>
       </main>
 
       <footer className="w-full pb-space-lg pt-space-md px-gutter-mobile md:px-gutter-desktop">
         <div className="max-w-container-max mx-auto flex flex-col sm:flex-row items-center justify-center gap-space-xs sm:gap-space-sm text-center text-on-surface-variant font-body-sm text-body-sm">
-          <span className="flex items-center gap-space-2xs">
-            <Lock className="text-[14px] text-primary" />
-            SOC-2 Certified
-          </span>
-          <span className="hidden sm:inline opacity-40">•</span>
-          <span>256-bit TLS Encryption</span>
+
           <span className="hidden sm:inline opacity-40">•</span>
           <span>© 2025 UrbanMart Technologies Inc.</span>
         </div>

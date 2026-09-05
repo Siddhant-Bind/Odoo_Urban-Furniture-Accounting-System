@@ -46,6 +46,7 @@ enum OrderStatus {
 enum DocStatus {
   DRAFT
   POSTED
+  PAID
   CANCELLED
 }
 enum EntryStatus {
@@ -133,7 +134,7 @@ model Account {
 model Journal {
   id Int @id @default(autoincrement())
   journalName String @unique
-  journalType JournalType @unique
+  journalType JournalType
   defaultDebitAccountId Int?
   defaultCreditAccountId Int?
   defaultDebitAccount Account? @relation("DefaultDebitAccount", fields: [defaultDebitAccountId], references: [id])

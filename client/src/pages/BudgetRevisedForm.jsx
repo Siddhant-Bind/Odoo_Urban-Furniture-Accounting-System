@@ -175,7 +175,7 @@ export default function BudgetRevisedForm() {
                </div>
                <div className="flex flex-col">
                  <span className="font-label-md font-bold text-on-surface">Revised With</span>
-                 <span className="font-body-sm text-on-surface-variant">Alex Morgan</span>
+                 <span className="font-body-sm text-on-surface-variant">USER</span>
                </div>
              </div>
              <div className="flex flex-col sm:items-end">
@@ -206,7 +206,7 @@ export default function BudgetRevisedForm() {
                 className="w-full h-12 px-4 rounded-lg bg-surface-container-low text-on-surface border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all outline-none"
               >
                 <option value="">Select a Contact...</option>
-                <option value="1">Alex Morgan</option>
+                <option value="1">USER</option>
                 <option value="2">Sarah Jenkins</option>
               </select>
             </div>

@@ -16,13 +16,13 @@ export default function NewJournal() {
     fetchClient('/accounts').then(setAccounts).catch(console.error);
   }, []);
 
-  const filtered = accounts.filter(a => a.name.toLowerCase().includes(acSearch.toLowerCase()));
-  const selectAc = (a) => { setForm(f => ({ ...f, account: a.id })); setAcSearch(a.name); setShowAcDrop(false); };
+  const filtered = accounts.filter(a => (a.accountName || "").toLowerCase().includes(acSearch.toLowerCase()));
+  const selectAc = (a) => { setForm(f => ({ ...f, account: a.id })); setAcSearch(a.accountName); setShowAcDrop(false); };
 
   const handleSave = async () => {
     if (form.name && form.type) {
       const typeMap = {
-        "Sales": "SALE",
+        "Sales": "SALES",
         "Purchase": "PURCHASE",
         "Bank": "BANK",
         "Cash": "CASH"
@@ -32,10 +32,10 @@ export default function NewJournal() {
         await fetchClient('/journals', {
           method: 'POST',
           body: JSON.stringify({
-            name: form.name,
-            code: form.name.substring(0, 3).toUpperCase(),
-            type: typeMap[form.type] || "MISCELLANEOUS",
-            defaultAccountId: form.account ? parseInt(form.account, 10) : null
+            journalName: form.name,
+            journalType: typeMap[form.type] || "BANK",
+            defaultDebitAccountId: form.account ? parseInt(form.account, 10) : null,
+            defaultCreditAccountId: form.account ? parseInt(form.account, 10) : null
           })
         });
         navigate("/journals");
@@ -103,7 +103,7 @@ export default function NewJournal() {
               {showAcDrop && (
                 <div className="absolute left-0 right-0 top-12 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-20 max-h-44 overflow-y-auto">
                   {filtered.length ? filtered.map(a => (
-                    <button key={a.id} type="button" onMouseDown={() => selectAc(a)} className="w-full text-left px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#CCFBF1]/40 transition-colors">{a.name}</button>
+                    <button key={a.id} type="button" onMouseDown={() => selectAc(a)} className="w-full text-left px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#CCFBF1]/40 transition-colors">{a.accountName}</button>
                   )) : <p className="px-4 py-3 text-sm text-[#94A3B8]">No accounts found</p>}
                 </div>
               )}

@@ -1,5 +1,7 @@
 import prisma from '../../config/prisma.js';
 
+import bcrypt from 'bcryptjs';
+
 export const createContact = async (req, res, next) => {
   try {
     const { name, type, email, mobile, addressCity, addressState, addressPincode } = req.body;
@@ -9,20 +11,50 @@ export const createContact = async (req, res, next) => {
       profileImage = req.file.path.split('src')[1].replace(/\\/g, '/'); // e.g. /uploads/contacts/file.jpg
     }
 
-    const contact = await prisma.contact.create({
-      data: {
-        name,
-        type,
-        email,
-        mobile,
-        addressCity,
-        addressState,
-        addressPincode,
-        profileImage
+    // Use a transaction to ensure both Contact and User are created atomically
+    const result = await prisma.$transaction(async (tx) => {
+      const contact = await tx.contact.create({
+        data: {
+          name,
+          type,
+          email,
+          mobile,
+          addressCity,
+          addressState,
+          addressPincode,
+          profileImage
+        }
+      });
+
+      // If the contact is a CUSTOMER, automatically create a User for them to login
+      if (type === 'CUSTOMER') {
+        const loginId = name.toLowerCase().replace(/\s+/g, '');
+        const plainPassword = mobile && mobile.trim() !== '' ? mobile : 'password123';
+        const passwordHash = await bcrypt.hash(plainPassword, 10);
+
+        // Check if loginId already exists to avoid conflict
+        let uniqueLoginId = loginId;
+        let counter = 1;
+        while (await tx.user.findUnique({ where: { loginId: uniqueLoginId } })) {
+          uniqueLoginId = `${loginId}${counter}`;
+          counter++;
+        }
+
+        await tx.user.create({
+          data: {
+            loginId: uniqueLoginId,
+            email: email || `${uniqueLoginId}@example.com`, // Email is unique in User model, so ensure it's not null/duplicated if missing
+            passwordHash,
+            role: 'CONTACT',
+            contactId: contact.id
+          }
+        });
       }
+
+      return contact;
     });
 
-    res.status(201).json(contact);
+    res.status(201).json(result);
   } catch (error) {
     next(error);
   }
