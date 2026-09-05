@@ -1,20 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { BarChart3, CheckCircle, ChevronDown, ChevronRight, Clock, Filter, Kanban, Landmark, LayoutGrid, List, Lock, PieChart, Plus, Receipt, RefreshCw, Search, Shield, ShoppingBag, Truck, User, Wallet } from "lucide-react";
+import { BarChart3, Briefcase, CheckCircle, ChevronDown, ChevronRight, Clock, Filter, Kanban, Landmark, LayoutGrid, List, Lock, LogOut, PieChart, Plus, Receipt, RefreshCw, Search, Shield, ShieldCheck, ShoppingBag, Truck, User, Wallet } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // TODO: Add role context here later. For now, mocking as Admin.
-  const userRole = "Admin";
+  const { user, logout } = useAuth();
+  const userRole = user?.role ?? "Admin";
 
   const [viewMode, setViewMode] = useState("list");
+  const [profileOpen, setProfileOpen] = useState(false);
   const [openSections, setOpenSections] = useState({
-    sales: true,
-    purchase: true,
-    account: true,
-    report: true,
+    sales: false,
+    purchase: false,
+    account: false,
+    report: false,
   });
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const toggleSection = (key) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -30,36 +37,28 @@ export default function Dashboard() {
                 URBANMART
               </span>
             </div>
-            <nav
-              className="hidden md:flex items-center gap-space-lg h-16"
-              data-active-classes="text-on-surface font-semibold relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary-container"
-            >
+            <nav className="hidden md:flex items-center gap-space-lg h-16">
               <Link
-                aria-current="page"
                 className="h-16 inline-flex items-center transition-colors text-on-surface font-semibold relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary-container"
-                data-path="sales"
-                to="#"
+                to="/sales-orders"
               >
                 Sales
               </Link>
               <Link
                 className="h-16 inline-flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors"
-                data-path="purchase"
-                to="#"
+                to="/purchase-orders"
               >
                 Purchase
               </Link>
               <Link
                 className="h-16 inline-flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors"
-                data-path="account"
-                to="#"
+                to="/chart-of-accounts"
               >
                 Account
               </Link>
               <Link
                 className="h-16 inline-flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors"
-                data-path="report"
-                to="#"
+                to="/profit-and-loss"
               >
                 Report
               </Link>
@@ -68,8 +67,8 @@ export default function Dashboard() {
           <div className="flex items-center gap-space-base">
             <div className="flex items-center gap-space-xs">
               <span className="hidden sm:inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider font-semibold">
-                <Lock className="text-[14px]" />
-                Admin
+                {userRole === "Admin" ? <Shield className="text-[14px] w-3.5 h-3.5" /> : <Briefcase className="text-[14px] w-3.5 h-3.5" />}
+                {userRole}
               </span>
               {userRole === "Admin" && (
                 <button
@@ -83,23 +82,40 @@ export default function Dashboard() {
               )}
             </div>
             <div className="h-8 w-[1px] bg-surface-container hidden sm:block"></div>
-            <button
-              className="flex items-center gap-space-sm p-space-xs rounded-full hover:bg-surface-container-low transition-colors text-left"
-              type="button"
-            >
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <User className="text-on-primary text-[18px]" />
-              </div>
-              <div className="hidden xl:flex flex-col">
-                <span className="font-label-md text-label-md text-on-surface font-semibold">
-                  Alex Morgan
-                </span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant">
-                  Admin
-                </span>
-              </div>
-              <ChevronDown className="text-on-surface-variant text-[20px]" />
-            </button>
+            {/* Profile dropdown */}
+            <div className="relative">
+              <button
+                className="flex items-center gap-space-sm p-space-xs rounded-full hover:bg-surface-container-low transition-colors text-left cursor-pointer"
+                type="button"
+                onClick={() => setProfileOpen((o) => !o)}
+              >
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <User className="text-on-primary text-[18px]" />
+                </div>
+                <div className="hidden xl:flex flex-col">
+                  <span className="font-label-md text-label-md text-on-surface font-semibold">{user?.name ?? "Alex Morgan"}</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant">{userRole}</span>
+                </div>
+                <ChevronDown className="text-on-surface-variant text-[20px]" />
+              </button>
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-surface-container-lowest border border-surface-container rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                  <div className="px-4 py-2 border-b border-surface-container">
+                    <p className="font-semibold text-sm text-on-surface">{user?.name ?? "Alex Morgan"}</p>
+                    <p className="text-xs text-on-surface-variant">{user?.email ?? ""}</p>
+                  </div>
+                  <button onClick={() => setProfileOpen(false)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer">
+                    <User className="w-4 h-4 text-on-surface-variant" />
+                    <span>Profile</span>
+                  </button>
+                  <div className="h-px bg-surface-container"></div>
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/30 transition-colors cursor-pointer">
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -715,37 +731,31 @@ export default function Dashboard() {
                       <nav className="flex flex-col gap-space-2xs pt-space-xs border-t border-surface-container/40">
                         <Link
                           className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                          to="#"
+                          to="/sales-orders"
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                              Sales Order
-                            </span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Sales Order</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>
                         <Link
                           className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                          to="#"
+                          to="/customer-invoices"
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                              Sale Invoice
-                            </span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Sale Invoice</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>
                         <Link
                           className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                          to="#"
+                          to="/receipts"
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                              Receipt
-                            </span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Receipt</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>
@@ -936,7 +946,7 @@ export default function Dashboard() {
                       </span>
                       <div className="flex items-center gap-space-xs">
                         <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold">
-                          3 items
+                          4 items
                         </span>
                         <ChevronDown
                           className={`text-[16px] text-on-surface-variant transition-transform duration-200 ${
@@ -953,21 +963,27 @@ export default function Dashboard() {
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                              Balance Sheet
-                            </span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Balance Sheet</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>
                         <Link
                           className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
-                          to="#"
+                          to="/profit-and-loss"
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                              Profit and Loss
-                            </span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Profit and Loss</span>
+                          </div>
+                          <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        </Link>
+                        <Link
+                          className="group flex items-center justify-between px-space-sm py-space-xs rounded-lg hover:bg-secondary-container/40 text-on-surface transition-colors"
+                          to="/sales-sheet"
+                        >
+                          <div className="flex items-center gap-space-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Sales Sheet</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>
@@ -977,9 +993,7 @@ export default function Dashboard() {
                         >
                           <div className="flex items-center gap-space-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">
-                              Budget Report
-                            </span>
+                            <span className="font-body-md text-body-md group-hover:font-semibold transition-all">Budget Report</span>
                           </div>
                           <ChevronRight className="text-[16px] text-on-surface-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>

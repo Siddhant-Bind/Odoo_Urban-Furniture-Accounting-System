@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthLayout from './layouts/AuthLayout';
 import PublicLayout from './layouts/PublicLayout';
+import { useAuth } from './context/AuthContext';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -26,6 +27,12 @@ import BillPaymentForm from './pages/BillPaymentForm';
 import BudgetRevisedForm from './pages/BudgetRevisedForm';
 import BudgetReportList from './pages/BudgetReportList';
 import BudgetReportKanban from './pages/BudgetReportKanban';
+import ForgotPassword from './pages/ForgotPassword';
+import SalesOrderForm from './pages/SalesOrderForm';
+import CustomerInvoiceForm from './pages/CustomerInvoiceForm';
+import InvoiceRegister from './pages/InvoiceRegister';
+import ProfitAndLoss from './pages/ProfitAndLoss';
+import SalesSheet from './pages/SalesSheet';
 
 // Temporary placeholder for unbuilt screens
 const Placeholder = ({ title }) => (
@@ -37,6 +44,14 @@ const Placeholder = ({ title }) => (
   </div>
 );
 
+// Auth guard: redirect unauthenticated users to /login
+function RequireAuth({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
 export default function App() {
   return (
     <Router>
@@ -46,6 +61,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
 
         {/* Auth Gated Routes */}
@@ -88,13 +104,16 @@ export default function App() {
           <Route path="/payments/new" element={<BillPaymentForm />} />
 
           {/* Sales Cycle */}
-          <Route path="/sales-orders" element={<Placeholder title="Sales Orders" />} />
-          <Route path="/customer-invoices" element={<Placeholder title="Customer Invoices" />} />
+          <Route path="/sales-orders" element={<SalesOrderForm />} />
+          <Route path="/sales-orders/new" element={<SalesOrderForm />} />
+          <Route path="/customer-invoices" element={<InvoiceRegister />} />
+          <Route path="/customer-invoices/new" element={<CustomerInvoiceForm />} />
           <Route path="/receipts" element={<Placeholder title="Receipts" />} />
 
           {/* Reports */}
           <Route path="/balance-sheet" element={<Placeholder title="Balance Sheet" />} />
-          <Route path="/profit-and-loss" element={<Placeholder title="Profit and Loss" />} />
+          <Route path="/profit-and-loss" element={<ProfitAndLoss />} />
+          <Route path="/sales-sheet" element={<SalesSheet />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
