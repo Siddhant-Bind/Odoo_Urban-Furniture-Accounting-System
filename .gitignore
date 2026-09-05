@@ -35,7 +35,9 @@ logs/
 # Build / Distribution
 build/
 dist/
-/docs
+/docs/*
+!/docs/
+
 *.egg-info/
 
 # Testing / Coverage

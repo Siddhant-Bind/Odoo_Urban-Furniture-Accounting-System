@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ path: new URL('../../.env', import.meta.url) });
 
-const required = [ 'JWT_SECRET'];
+const required = ['JWT_SECRET'];
 required.forEach((key) => {
   if (!process.env[key]) throw new Error(`Missing required env var: ${key}`);
 });

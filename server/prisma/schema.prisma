@@ -1,340 +1,323 @@
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider = "mysql"
+  url = env("DATABASE_URL")
 }
-
-// ---------- ENUMS ----------
 
 enum Role {
-  admin
-  invoicing_user
-  contact_user
+  ADMIN
+  INVOICING_USER
+  CONTACT
 }
-
 enum ContactType {
-  customer
-  vendor
+  CUSTOMER
+  VENDOR
 }
-
 enum ProductType {
-  goods
-  service
-  combo
+  GOODS
+  SERVICE
+  COMBO
 }
-
 enum AccountType {
-  asset
-  liability
-  income
-  cash
-  capital
-  expenses
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+  CAPITAL
 }
-
 enum JournalType {
-  sales
-  purchase
-  bank
-  cash
+  SALES
+  PURCHASE
+  BANK
+  CASH
 }
-
 enum Status {
-  active
-  archived
+  ACTIVE
+  ARCHIVED
 }
-
 enum OrderStatus {
-  draft
-  confirmed
-  billed
-  cancelled
+  DRAFT
+  CONFIRMED
+  BILLED
+  CANCELLED
 }
-
 enum DocStatus {
-  draft
-  posted
-  cancelled
+  DRAFT
+  POSTED
+  CANCELLED
 }
-
+enum EntryStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
 enum PaymentMethod {
-  cash
-  bank
+  CASH
+  BANK
 }
-
 enum BudgetStatus {
-  draft
-  confirm
-  revise
-  cancelled
+  DRAFT
+  CONFIRMED
+  REVISED
+  CANCELLED
 }
-
 enum AnalyticType {
-  income
-  expense
+  INCOME
+  EXPENSE
 }
-
-// ---------- USERS ----------
 
 model User {
-  id              Int      @id @default(autoincrement())
-  loginId         String   @unique
-  email           String   @unique
-  passwordHash    String
-  role            Role
-  linkedContact   Contact? @relation(fields: [linkedContactId], references: [id])
-  linkedContactId Int?
-  status          Status   @default(active)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  budgets Budget[]
+  id Int @id @default(autoincrement())
+  loginId String @unique
+  email String @unique
+  passwordHash String
+  role Role @default(INVOICING_USER)
+  contactId Int? @unique
+  contact Contact? @relation(fields: [contactId], references: [id])
+  status Status @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  budgets Budget[] @relation("BudgetResponsiblePerson")
 }
-
-// ---------- MASTER DATA (4 tables) ----------
-
 model Contact {
-  id               Int         @id @default(autoincrement())
-  name             String
-  type             ContactType
-  email            String?
-  mobile           String?
-  addressCity      String?
-  addressState     String?
-  addressPincode   String?
-  profileImage     Bytes?      @db.MediumBlob
-  profileImageMime String?
-  status           Status      @default(active)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-
-  users            User[]
-  purchaseOrders   PurchaseOrder[]
-  vendorBills      VendorBill[]
-  salesOrders      SalesOrder[]
-  customerInvoices CustomerInvoice[]
+  id Int @id @default(autoincrement())
+  name String
+  type ContactType
+  email String?
+  mobile String?
+  addressCity String?
+  addressState String?
+  addressPincode String?
+  profileImage String?
+  status Status @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User?
+  purchaseOrders PurchaseOrder[] @relation("PurchaseOrderVendor")
+  vendorBills VendorBill[] @relation("VendorBillVendor")
+  salesOrders SalesOrder[] @relation("SalesOrderCustomer")
+  customerInvoices CustomerInvoice[] @relation("CustomerInvoiceCustomer")
   journalEntryLines JournalEntryLine[]
 }
-
 model Product {
-  id           Int         @id @default(autoincrement())
-  productName  String
-  type         ProductType
-  category     String?
-  salesPrice   Decimal     @db.Decimal(12, 2)
-  cost         Decimal     @db.Decimal(12, 2)
-  status       Status      @default(active)
-
-  poLines      PurchaseOrderLine[]
-  billLines    VendorBillLine[]
-  soLines      SalesOrderLine[]
-  invoiceLines InvoiceLine[]
+  id Int @id @default(autoincrement())
+  productName String
+  type ProductType
+  category String?
+  salesPrice Decimal @db.Decimal(12, 2)
+  cost Decimal @db.Decimal(12, 2)
+  status Status @default(ACTIVE)
+  poLines PurchaseOrderLine[]
+  billLines VendorBillLine[]
+  soLines SalesOrderLine[]
+  invoiceLines CustomerInvoiceLine[]
 }
-
-model ChartOfAccount {
-  id              Int              @id @default(autoincrement())
-  accountName     String
-  accountType     AccountType
-  parentAccount   ChartOfAccount?  @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
+model Account {
+  id Int @id @default(autoincrement())
+  accountName String @unique
+  accountType AccountType
   parentAccountId Int?
-  children        ChartOfAccount[] @relation("AccountHierarchy")
-  status          Status           @default(active)
-
+  parentAccount Account? @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
+  children Account[] @relation("AccountHierarchy")
+  status Status @default(ACTIVE)
   journalEntryLines JournalEntryLine[]
-  journalsAsDebit   Journal[]          @relation("DefaultDebitAccount")
-  journalsAsCredit  Journal[]          @relation("DefaultCreditAccount")
+  purchaseOrderLines PurchaseOrderLine[]
+  vendorBillLines VendorBillLine[]
+  salesOrderLines SalesOrderLine[]
+  customerInvoiceLines CustomerInvoiceLine[]
+  journalsAsDebit Journal[] @relation("DefaultDebitAccount")
+  journalsAsCredit Journal[] @relation("DefaultCreditAccount")
 }
-
 model Journal {
-  id                     Int         @id @default(autoincrement())
-  journalName            String
-  journalType            JournalType
-  defaultDebitAccount    ChartOfAccount? @relation("DefaultDebitAccount", fields: [defaultDebitAccountId], references: [id])
-  defaultDebitAccountId  Int?
-  defaultCreditAccount   ChartOfAccount? @relation("DefaultCreditAccount", fields: [defaultCreditAccountId], references: [id])
+  id Int @id @default(autoincrement())
+  journalName String @unique
+  journalType JournalType @unique
+  defaultDebitAccountId Int?
   defaultCreditAccountId Int?
-
-  vendorBills      VendorBill[]
+  defaultDebitAccount Account? @relation("DefaultDebitAccount", fields: [defaultDebitAccountId], references: [id])
+  defaultCreditAccount Account? @relation("DefaultCreditAccount", fields: [defaultCreditAccountId], references: [id])
+  vendorBills VendorBill[]
   customerInvoices CustomerInvoice[]
-  journalEntries   JournalEntry[]
+  journalEntries JournalEntry[]
 }
-
-// ---------- TRANSACTIONS (8 tables) ----------
-
 model PurchaseOrder {
-  id       Int         @id @default(autoincrement())
-  poNumber String      @unique   // auto-generated, e.g. PO-0001
-  vendor   Contact     @relation(fields: [vendorId], references: [id])
+  id Int @id @default(autoincrement())
+  poNumber String @unique
   vendorId Int
+  vendor Contact @relation("PurchaseOrderVendor", fields: [vendorId], references: [id])
   orderDate DateTime
-  status   OrderStatus @default(draft)
-
+  status OrderStatus @default(DRAFT)
   lines PurchaseOrderLine[]
   bills VendorBill[]
 }
-
 model PurchaseOrderLine {
-  id              Int           @id @default(autoincrement())
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  id Int @id @default(autoincrement())
   purchaseOrderId Int
-  product         Product       @relation(fields: [productId], references: [id])
-  productId       Int
-  quantity        Decimal       @db.Decimal(10, 2)
-  unitPrice       Decimal       @db.Decimal(12, 2)
-  total           Decimal       @db.Decimal(12, 2)
-}
-
-model VendorBill {
-  id              Int             @id @default(autoincrement())
-  billNumber      String          @unique   // auto-generated, e.g. BILL-0001
-  purchaseOrder   PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
-  purchaseOrderId Int?
-  vendor          Contact         @relation(fields: [vendorId], references: [id])
-  vendorId        Int
-  invoiceDate     DateTime
-  dueDate         DateTime
-  totalAmount     Decimal         @db.Decimal(12, 2)
-  status          DocStatus       @default(draft)
-  journal         Journal         @relation(fields: [journalId], references: [id])
-  journalId       Int
-
-  lines    VendorBillLine[]
-  payments BillPayment[]
-}
-
-model VendorBillLine {
-  id        Int        @id @default(autoincrement())
-  bill      VendorBill @relation(fields: [billId], references: [id])
-  billId    Int
-  product   Product    @relation(fields: [productId], references: [id])
   productId Int
-  quantity  Decimal    @db.Decimal(10, 2)
-  unitPrice Decimal    @db.Decimal(12, 2)
-  total     Decimal    @db.Decimal(12, 2)
+  accountId Int?
+  analyticAccountId Int?
+  quantity Decimal @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(12, 2)
+  total Decimal @db.Decimal(12, 2)
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+  analyticAccount AnalyticAccount? @relation(fields: [analyticAccountId], references: [id])
 }
-
+model VendorBill {
+  id Int @id @default(autoincrement())
+  billNumber String @unique
+  purchaseOrderId Int?
+  vendorId Int
+  journalId Int
+  invoiceDate DateTime
+  dueDate DateTime
+  totalAmount Decimal @db.Decimal(12, 2)
+  status DocStatus @default(DRAFT)
+  purchaseOrder PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  vendor Contact @relation("VendorBillVendor", fields: [vendorId], references: [id])
+  journal Journal @relation(fields: [journalId], references: [id])
+  lines VendorBillLine[]
+  payments BillPayment[]
+  journalEntry JournalEntry?
+}
+model VendorBillLine {
+  id Int @id @default(autoincrement())
+  billId Int
+  productId Int
+  accountId Int?
+  analyticAccountId Int?
+  quantity Decimal @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(12, 2)
+  total Decimal @db.Decimal(12, 2)
+  bill VendorBill @relation(fields: [billId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+  analyticAccount AnalyticAccount? @relation(fields: [analyticAccountId], references: [id])
+}
 model BillPayment {
-  id            Int           @id @default(autoincrement())
-  bill          VendorBill    @relation(fields: [billId], references: [id])
-  billId        Int
-  amount        Decimal       @db.Decimal(12, 2)
-  paymentVia    PaymentMethod
-  paymentDate   DateTime
+  id Int @id @default(autoincrement())
+  billId Int
+  amount Decimal @db.Decimal(12, 2)
+  paymentVia PaymentMethod
+  paymentDate DateTime
+  bill VendorBill @relation(fields: [billId], references: [id])
 }
-
 model SalesOrder {
-  id        Int         @id @default(autoincrement())
-  soNumber  String      @unique   // auto-generated, e.g. SO-0001
-  customer  Contact     @relation(fields: [customerId], references: [id])
+  id Int @id @default(autoincrement())
+  soNumber String @unique
   customerId Int
   orderDate DateTime
-  status    OrderStatus @default(draft)
-
-  lines    SalesOrderLine[]
+  status OrderStatus @default(DRAFT)
+  customer Contact @relation("SalesOrderCustomer", fields: [customerId], references: [id])
+  lines SalesOrderLine[]
   invoices CustomerInvoice[]
 }
-
 model SalesOrderLine {
-  id           Int        @id @default(autoincrement())
-  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id])
+  id Int @id @default(autoincrement())
   salesOrderId Int
-  product      Product    @relation(fields: [productId], references: [id])
-  productId    Int
-  quantity     Decimal    @db.Decimal(10, 2)
-  unitPrice    Decimal    @db.Decimal(12, 2)
-  tax          Decimal?   @db.Decimal(5, 2)
-  total        Decimal    @db.Decimal(12, 2)
-}
-
-model CustomerInvoice {
-  id           Int           @id @default(autoincrement())
-  invoiceNumber String       @unique   // auto-generated, e.g. INV-0001
-  salesOrder   SalesOrder?   @relation(fields: [salesOrderId], references: [id])
-  salesOrderId Int?
-  customer     Contact       @relation(fields: [customerId], references: [id])
-  customerId   Int
-  invoiceDate  DateTime
-  dueDate      DateTime
-  totalAmount  Decimal       @db.Decimal(12, 2)
-  status       DocStatus     @default(draft)
-  journal      Journal       @relation(fields: [journalId], references: [id])
-  journalId    Int
-
-  lines    InvoiceLine[]
-  payments InvoicePayment[]
-}
-
-model InvoiceLine {
-  id        Int             @id @default(autoincrement())
-  invoice   CustomerInvoice @relation(fields: [invoiceId], references: [id])
-  invoiceId Int
-  product   Product         @relation(fields: [productId], references: [id])
   productId Int
-  quantity  Decimal         @db.Decimal(10, 2)
-  unitPrice Decimal         @db.Decimal(12, 2)
-  tax       Decimal?        @db.Decimal(5, 2)
-  total     Decimal         @db.Decimal(12, 2)
+  accountId Int?
+  analyticAccountId Int?
+  quantity Decimal @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(12, 2)
+  tax Decimal? @db.Decimal(5, 2)
+  total Decimal @db.Decimal(12, 2)
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+  analyticAccount AnalyticAccount? @relation(fields: [analyticAccountId], references: [id])
 }
-
+model CustomerInvoice {
+  id Int @id @default(autoincrement())
+  invoiceNumber String @unique
+  salesOrderId Int?
+  customerId Int
+  journalId Int
+  invoiceDate DateTime
+  dueDate DateTime
+  totalAmount Decimal @db.Decimal(12, 2)
+  status DocStatus @default(DRAFT)
+  salesOrder SalesOrder? @relation(fields: [salesOrderId], references: [id])
+  customer Contact @relation("CustomerInvoiceCustomer", fields: [customerId], references: [id])
+  journal Journal @relation(fields: [journalId], references: [id])
+  lines CustomerInvoiceLine[]
+  payments InvoicePayment[]
+  journalEntry JournalEntry?
+}
+model CustomerInvoiceLine {
+  id Int @id @default(autoincrement())
+  invoiceId Int
+  productId Int
+  accountId Int?
+  analyticAccountId Int?
+  quantity Decimal @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(12, 2)
+  tax Decimal? @db.Decimal(5, 2)
+  total Decimal @db.Decimal(12, 2)
+  invoice CustomerInvoice @relation(fields: [invoiceId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+  analyticAccount AnalyticAccount? @relation(fields: [analyticAccountId], references: [id])
+}
 model InvoicePayment {
-  id          Int             @id @default(autoincrement())
-  invoice     CustomerInvoice @relation(fields: [invoiceId], references: [id])
-  invoiceId   Int
-  amount      Decimal         @db.Decimal(12, 2)
-  paymentVia  PaymentMethod
+  id Int @id @default(autoincrement())
+  invoiceId Int
+  amount Decimal @db.Decimal(12, 2)
+  paymentVia PaymentMethod
   paymentDate DateTime
+  invoice CustomerInvoice @relation(fields: [invoiceId], references: [id])
 }
-
-// ---------- ACCOUNTING / LEDGER (2 tables) ----------
-
 model JournalEntry {
-  id         Int       @id @default(autoincrement())
-  journal    Journal   @relation(fields: [journalId], references: [id])
-  journalId  Int
-  entryDate  DateTime
-  reference  String?
-  status     DocStatus @default(draft)  // Draft or Posted
-  sourceType String?   // 'bill' | 'invoice' | 'manual'
-  sourceId   Int?
-  createdAt  DateTime  @default(now())
-
+  id Int @id @default(autoincrement())
+  journalId Int
+  vendorBillId Int? @unique
+  customerInvoiceId Int? @unique
+  entryDate DateTime @default(now())
+  reference String?
+  status EntryStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  journal Journal @relation(fields: [journalId], references: [id])
+  vendorBill VendorBill? @relation(fields: [vendorBillId], references: [id])
+  customerInvoice CustomerInvoice? @relation(fields: [customerInvoiceId], references: [id])
   lines JournalEntryLine[]
 }
-
 model JournalEntryLine {
-  id                Int              @id @default(autoincrement())
-  entry             JournalEntry     @relation(fields: [entryId], references: [id])
-  entryId           Int
-  account           ChartOfAccount   @relation(fields: [accountId], references: [id])
-  accountId         Int
-  partner           Contact?         @relation(fields: [partnerId], references: [id])
-  partnerId         Int?
-  debit             Decimal          @default(0) @db.Decimal(12, 2)
-  credit            Decimal          @default(0) @db.Decimal(12, 2)
+  id Int @id @default(autoincrement())
+  entryId Int
+  accountId Int
+  partnerId Int?
+  debit Decimal @default(0) @db.Decimal(12, 2)
+  credit Decimal @default(0) @db.Decimal(12, 2)
+  entry JournalEntry @relation(fields: [entryId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+  partner Contact? @relation(fields: [partnerId], references: [id])
 }
-
-// ---------- BUDGETING (2 tables) ----------
-
 model AnalyticAccount {
-  id   Int          @id @default(autoincrement())
-  name String
+  id Int @id @default(autoincrement())
+  name String @unique
   type AnalyticType
-
+  purchaseOrderLines PurchaseOrderLine[]
+  vendorBillLines VendorBillLine[]
+  salesOrderLines SalesOrderLine[]
+  customerInvoiceLines CustomerInvoiceLine[]
   budgets Budget[]
 }
-
 model Budget {
-  id                  Int             @id @default(autoincrement())
-  budgetName          String
-  periodStart         DateTime
-  periodEnd           DateTime
-  responsiblePerson   User            @relation(fields: [responsiblePersonId], references: [id])
+  id Int @id @default(autoincrement())
+  budgetName String
+  periodStart DateTime
+  periodEnd DateTime
   responsiblePersonId Int
-  analyticAccount     AnalyticAccount @relation(fields: [analyticAccountId], references: [id])
-  analyticAccountId   Int
-  status              BudgetStatus    @default(draft)
-  committedAmount     Decimal         @db.Decimal(12, 2)
-  achievedAmount      Decimal         @default(0) @db.Decimal(12, 2)
+  analyticAccountId Int
+  revisionOfId Int?
+  status BudgetStatus @default(DRAFT)
+  committedAmount Decimal @db.Decimal(12, 2)
+  achievedAmount Decimal @default(0) @db.Decimal(12, 2)
+  responsiblePerson User @relation("BudgetResponsiblePerson", fields: [responsiblePersonId], references: [id])
+  analyticAccount AnalyticAccount @relation(fields: [analyticAccountId], references: [id])
+  revisionOf Budget? @relation("BudgetRevisions", fields: [revisionOfId], references: [id])
+  revisions Budget[] @relation("BudgetRevisions")
 }
