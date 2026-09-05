@@ -19,12 +19,17 @@
  * `prisma generate`, otherwise the client won't compile. This seed
  * assumes the enum is called AccountType with values:
  *   asset | liability | income | expenses | capital
+ * 
  */
+import dotenv from "dotenv";
+dotenv.config({ path: "../.env" });
+import { PrismaClient } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import bcrypt from "bcryptjs";
 
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs'); // npm i bcryptjs
+const adapter = new PrismaMariaDb(process.env.DATABASE_URL);
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
     console.log('Clearing existing data...');

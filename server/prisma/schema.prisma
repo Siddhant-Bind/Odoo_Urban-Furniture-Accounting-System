@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // ---------- ENUMS ----------
@@ -32,7 +31,6 @@ enum AccountType {
   income
   cash
   capital
-  income
   expenses
 }
 
@@ -117,6 +115,7 @@ model Contact {
   vendorBills      VendorBill[]
   salesOrders      SalesOrder[]
   customerInvoices CustomerInvoice[]
+  journalEntryLines JournalEntryLine[]
 }
 
 model Product {
