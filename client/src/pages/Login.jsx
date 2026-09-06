@@ -193,7 +193,7 @@ export default function Login() {
         <div className="max-w-container-max mx-auto flex flex-col sm:flex-row items-center justify-center gap-space-xs sm:gap-space-sm text-center text-on-surface-variant font-body-sm text-body-sm">
 
           <span className="hidden sm:inline opacity-40">•</span>
-          <span>© 2025 UrbanMart Technologies Inc.</span>
+          <span>© 2026 UrbanMart Technologies Inc.</span>
         </div>
       </footer>
     </div>

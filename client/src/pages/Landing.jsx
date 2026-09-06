@@ -77,7 +77,7 @@ export default function Landing() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary-container/60 border border-primary/20 shadow-xs mb-6">
               <BadgeCheck className="text-primary text-base" />
               <span className="font-label-sm text-label-sm text-on-secondary-container font-semibold tracking-wide">
-                SOC-2 Type II Certified • 99.99% Uptime Guarantee
+                99.99% Uptime Guarantee
               </span>
             </div>
             {/*  Main Headline  */}
@@ -104,35 +104,6 @@ export default function Landing() {
                 <PlayCircle className="text-primary text-lg" />
                 <span>Book a Demo</span>
               </button>
-            </div>
-            {/*  Social Proof Strip  */}
-            <div className="flex items-center gap-4 pt-2 border-t border-outline-variant/40 w-full">
-              <div className="flex -space-x-2.5">
-                <div className="w-9 h-9 rounded-full bg-surface-container-high border-2 border-surface flex items-center justify-center text-xs font-bold text-primary shadow-xs">
-                  US
-                </div>
-                <div className="w-9 h-9 rounded-full bg-secondary-container border-2 border-surface flex items-center justify-center text-xs font-bold text-on-secondary-container shadow-xs">
-                  MK
-                </div>
-                <div className="w-9 h-9 rounded-full bg-tertiary-fixed border-2 border-surface flex items-center justify-center text-xs font-bold text-on-tertiary-fixed shadow-xs">
-                  FD
-                </div>
-                <div className="w-9 h-9 rounded-full bg-primary-fixed border-2 border-surface flex items-center justify-center text-xs font-bold text-on-primary-fixed shadow-xs">
-                  +2k
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center text-amber-500 text-xs">
-                  <Star className="text-sm" />
-                  <Star className="text-sm" />
-                  <Star className="text-sm" />
-                  <Star className="text-sm" />
-                  <Star className="text-sm" />
-                </div>
-                <span className="text-xs text-on-surface-variant font-medium">
-                  Trusted by 2,400+ commerce teams worldwide
-                </span>
-              </div>
             </div>
           </div>
           {/*  Hero Right Column: High-Fidelity Desktop SaaS Dashboard Preview  */}
@@ -171,7 +142,7 @@ export default function Landing() {
               <div className="mt-6 flex items-end justify-between">
                 <div>
                   <span className="text-4xl font-bold tracking-tight text-on-surface">
-                    $148,920.50
+                    ₹14,89,205
                   </span>
                   <span className="text-xs text-outline flex items-center gap-1.5 mt-1">
                     <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
@@ -183,7 +154,7 @@ export default function Landing() {
                     Available Overdraft
                   </span>
                   <span className="text-sm font-semibold text-on-surface">
-                    $50,000.00
+                    ₹5,00,000.00
                   </span>
                 </div>
               </div>
@@ -256,7 +227,7 @@ export default function Landing() {
                     32 Orders
                   </span>
                   <span className="text-[11px] text-primary font-semibold block mt-0.5">
-                    +$8,420.00
+                    +₹84,200.00
                   </span>
                 </div>
                 <div className="bg-surface-container-low/80 rounded-xl p-3 border border-outline-variant/30">
@@ -294,7 +265,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
           <div className="flex flex-col items-center">
             <span className="text-3xl lg:text-4xl font-bold text-primary tracking-tight">
-              $4.2B+
+              ₹35,000 Cr+
             </span>
             <span className="text-sm text-on-surface-variant font-medium mt-1">
               Gross Volume Processed
@@ -482,7 +453,7 @@ export default function Landing() {
               multi-location point of sale, and instant merchant settlement.
             </p>
             <span className="text-xs text-outline block">
-              © 2025 UrbanMart Technologies Inc. All rights reserved.
+              © 2026 UrbanMart Technologies Inc. All rights reserved.
             </span>
           </div>
           {/*  Col 2: Product  */}

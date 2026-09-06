@@ -112,7 +112,7 @@ export default function ForgotPassword() {
       </main>
 
       <footer className="relative z-10 w-full px-8 py-5 text-center text-xs text-[#64748B] flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-        <span>© 2025 UrbanMart Technologies Inc.</span>
+        <span>© 2026 UrbanMart Technologies Inc.</span>
       </footer>
     </div>
   );

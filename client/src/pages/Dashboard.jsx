@@ -1,9 +1,26 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { BarChart3, Briefcase, CheckCircle, ChevronDown, ChevronRight, Clock, Filter, Kanban, Landmark, LayoutGrid, List, Lock, LogOut, PieChart, Plus, Receipt, RefreshCw, Search, Shield, ShieldCheck, ShoppingBag, Truck, User, Wallet } from "lucide-react";
+import { AlertTriangle, BarChart3, Briefcase, CheckCircle, ChevronDown, ChevronRight, Clock, Filter, Kanban, Landmark, LayoutGrid, List, Lock, LogOut, PieChart, Plus, Receipt, RefreshCw, Search, Shield, ShieldCheck, ShoppingBag, Truck, User, Wallet, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { fetchClient } from "../utils/api";
 
+const SYSTEM_MODULES = [
+  { name: "Sales Orders", path: "/sales-orders", category: "Sales" },
+  { name: "Sale Invoices", path: "/customer-invoices", category: "Sales" },
+  { name: "Receipts", path: "/receipts", category: "Sales" },
+  { name: "Purchase Orders", path: "/purchase-orders", category: "Purchase" },
+  { name: "Purchase Bills", path: "/vendor-bills", category: "Purchase" },
+  { name: "Payments", path: "/payments", category: "Purchase" },
+  { name: "Contacts", path: "/contacts/list", category: "Account" },
+  { name: "Product Catalog", path: "/products/list", category: "Account" },
+  { name: "Analytical Budget", path: "/analytical-budget/new", category: "Account" },
+  { name: "Chart of Accounts", path: "/chart-of-accounts", category: "Account" },
+  { name: "Journals", path: "/journals", category: "Account" },
+  { name: "Journal Entries", path: "/journal-entries", category: "Account" },
+  { name: "Balance Sheet", path: "/balance-sheet", category: "Report" },
+  { name: "Profit and Loss", path: "/profit-and-loss", category: "Report" },
+  { name: "Budget Report", path: "/budget-report", category: "Report" },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -12,6 +29,8 @@ export default function Dashboard() {
 
   const [viewMode, setViewMode] = useState("list");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [directoryFilter, setDirectoryFilter] = useState("");
   const [openSections, setOpenSections] = useState({
     sales: false,
     purchase: false,
@@ -23,7 +42,8 @@ export default function Dashboard() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
-  const [budgets, setBudgets] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,13 +52,15 @@ export default function Dashboard() {
       fetchClient('/purchase/orders').catch(() => []),
       fetchClient('/accounts').catch(() => []),
       fetchClient('/journal-entries').catch(() => []),
-      fetchClient('/budgets').catch(() => [])
-    ]).then(([sales, purchase, accs, entries, budgs]) => {
+      fetchClient('/sales/invoices').catch(() => []),
+      fetchClient('/purchase/bills').catch(() => [])
+    ]).then(([sales, purchase, accs, entries, invs, bls]) => {
       setSalesOrders(sales);
       setPurchaseOrders(purchase);
       setAccounts(accs);
       setJournalEntries(entries);
-      setBudgets(budgs);
+      setInvoices(invs);
+      setBills(bls);
       setLoading(false);
     });
   }, []);
@@ -63,6 +85,62 @@ export default function Dashboard() {
   const bankAccount = accounts.find(a => a.accountType === 'BANK' || a.accountName?.toLowerCase().includes('bank')) || { balance: 0, accountName: 'Bank A/c' };
   const cashAccount = accounts.find(a => a.accountType === 'CASH' || a.accountName?.toLowerCase().includes('cash')) || { balance: 0, accountName: 'Cash Float' };
   const pendingEntries = journalEntries.filter(e => e.status === 'DRAFT').length;
+
+  const totalAR = invoices.reduce((sum, inv) => {
+    if (inv.status === 'POSTED') {
+      const paid = inv.payments?.reduce((pSum, p) => pSum + Number(p.amount), 0) || 0;
+      return sum + (Number(inv.totalAmount) - paid);
+    }
+    return sum;
+  }, 0);
+
+  const totalAP = bills.reduce((sum, bill) => {
+    if (bill.status === 'POSTED') {
+      const paid = bill.payments?.reduce((pSum, p) => pSum + Number(p.amount), 0) || 0;
+      return sum + (Number(bill.totalAmount) - paid);
+    }
+    return sum;
+  }, 0);
+
+  const totalDebits = journalEntries.reduce((sum, entry) => 
+    sum + (entry.lines?.reduce((lSum, line) => lSum + Number(line.debit || 0), 0) || 0)
+  , 0);
+  
+  const totalCredits = journalEntries.reduce((sum, entry) => 
+    sum + (entry.lines?.reduce((lSum, line) => lSum + Number(line.credit || 0), 0) || 0)
+  , 0);
+
+  const isLedgerBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
+  const ledgerVariance = Math.abs(totalDebits - totalCredits);
+
+  const q = searchQuery.trim().toLowerCase();
+
+  const filteredSalesOrders = salesOrders.filter((order) => {
+    if (!q) return true;
+    return (
+      (order.orderNumber && order.orderNumber.toLowerCase().includes(q)) ||
+      (order.customerName && order.customerName.toLowerCase().includes(q)) ||
+      (order.status && order.status.toLowerCase().includes(q)) ||
+      String(order.totalAmount || "").includes(q)
+    );
+  });
+
+  const filteredPurchaseOrders = purchaseOrders.filter((order) => {
+    if (!q) return true;
+    return (
+      (order.orderNumber && order.orderNumber.toLowerCase().includes(q)) ||
+      (order.vendorName && order.vendorName.toLowerCase().includes(q)) ||
+      (order.status && order.status.toLowerCase().includes(q)) ||
+      String(order.totalAmount || "").includes(q)
+    );
+  });
+
+  const matchingModules = q ? SYSTEM_MODULES.filter(m => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q)) : [];
+  const matchingInvoices = q ? invoices.filter(i => (i.invoiceNumber && i.invoiceNumber.toLowerCase().includes(q)) || (i.customerName && i.customerName.toLowerCase().includes(q))) : [];
+  const matchingBills = q ? bills.filter(b => (b.billNumber && b.billNumber.toLowerCase().includes(q)) || (b.vendorName && b.vendorName.toLowerCase().includes(q))) : [];
+  const matchingAccounts = q ? accounts.filter(a => (a.accountName && a.accountName.toLowerCase().includes(q)) || (a.code && a.code.toLowerCase().includes(q)) || (a.accountType && a.accountType.toLowerCase().includes(q))) : [];
+  const matchingSales = q ? salesOrders.filter(o => (o.orderNumber && o.orderNumber.toLowerCase().includes(q)) || (o.customerName && o.customerName.toLowerCase().includes(q))) : [];
+  const matchingPurchase = q ? purchaseOrders.filter(o => (o.orderNumber && o.orderNumber.toLowerCase().includes(q)) || (o.vendorName && o.vendorName.toLowerCase().includes(q))) : [];
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen relative overflow-x-hidden flex flex-col">
@@ -165,7 +243,7 @@ export default function Dashboard() {
                   </span>
                   <span className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                    Fiscal Year 2025 • Q2 Active
+                    Fiscal Year 2026 • Q2 Active
                   </span>
                 </div>
                 <div className="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
@@ -221,28 +299,159 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-            {/*  Search / Filter Unified Input  */}
+            {/* Active Search Input */}
             <div className="relative w-full">
               <span className="absolute inset-y-0 left-0 flex items-center pl-space-base pointer-events-none text-on-surface-variant">
                 <Search className="text-[20px]" />
               </span>
               <input
-                className="w-full h-12 pl-12 pr-32 rounded-full bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container/30 transition-all"
-                placeholder="Search orders, invoices, accounts, or journal ledger entries (Type '/' to focus)..."
+                className="w-full h-12 pl-12 pr-10 rounded-full bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container/30 transition-all"
+                placeholder="Search orders, invoices, accounts, or modules..."
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-space-base gap-space-xs">
-                <kbd className="hidden sm:inline-block px-space-xs py-space-2xs text-[10px] font-label-sm font-semibold text-on-surface-variant bg-surface-container rounded-lg">
-                  ⌘K
-                </kbd>
-                <span className="h-4 w-[1px] bg-surface-container"></span>
+              {searchQuery && (
                 <button
-                  className="font-label-sm text-label-sm font-semibold text-primary hover:text-on-primary-container transition-colors"
+                  className="absolute inset-y-0 right-0 flex items-center pr-space-base text-on-surface-variant hover:text-on-surface cursor-pointer"
                   type="button"
+                  onClick={() => setSearchQuery("")}
                 >
-                  Filters
+                  <X className="w-5 h-5" />
                 </button>
-              </div>
+              )}
+
+              {/* Dynamic Live Search Results Overlay */}
+              {q !== "" && (
+                <div className="absolute top-14 left-0 right-0 z-50 bg-surface-container-lowest border border-surface-container rounded-2xl shadow-xl p-space-md max-h-96 overflow-y-auto flex flex-col gap-space-md">
+                  {matchingModules.length === 0 &&
+                  matchingSales.length === 0 &&
+                  matchingPurchase.length === 0 &&
+                  matchingInvoices.length === 0 &&
+                  matchingBills.length === 0 &&
+                  matchingAccounts.length === 0 ? (
+                    <div className="py-4 text-center text-on-surface-variant font-body-md">
+                      No matches found for "{searchQuery}"
+                    </div>
+                  ) : (
+                    <>
+                      {matchingModules.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2">Modules</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {matchingModules.map((m) => (
+                              <Link
+                                key={m.path}
+                                to={m.path}
+                                onClick={() => setSearchQuery("")}
+                                className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-sm font-semibold text-on-surface"
+                              >
+                                <span>{m.name}</span>
+                                <span className="text-xs text-primary font-bold">{m.category}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {matchingSales.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2">Sales Orders</h4>
+                          <div className="flex flex-col gap-1.5">
+                            {matchingSales.slice(0, 4).map((o) => (
+                              <Link
+                                key={o.id}
+                                to="/sales-orders"
+                                onClick={() => setSearchQuery("")}
+                                className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-sm"
+                              >
+                                <span className="font-semibold text-on-surface">{o.orderNumber} • {o.customerName}</span>
+                                <span className="text-primary font-bold">₹{Number(o.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {matchingPurchase.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2">Purchase Orders</h4>
+                          <div className="flex flex-col gap-1.5">
+                            {matchingPurchase.slice(0, 4).map((o) => (
+                              <Link
+                                key={o.id}
+                                to="/purchase-orders"
+                                onClick={() => setSearchQuery("")}
+                                className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-sm"
+                              >
+                                <span className="font-semibold text-on-surface">{o.orderNumber} • {o.vendorName}</span>
+                                <span className="text-secondary font-bold">₹{Number(o.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {matchingInvoices.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2">Sale Invoices</h4>
+                          <div className="flex flex-col gap-1.5">
+                            {matchingInvoices.slice(0, 4).map((i) => (
+                              <Link
+                                key={i.id}
+                                to="/customer-invoices"
+                                onClick={() => setSearchQuery("")}
+                                className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-sm"
+                              >
+                                <span className="font-semibold text-on-surface">{i.invoiceNumber} • {i.customerName}</span>
+                                <span className="text-primary font-bold">₹{Number(i.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {matchingBills.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2">Vendor Bills</h4>
+                          <div className="flex flex-col gap-1.5">
+                            {matchingBills.slice(0, 4).map((b) => (
+                              <Link
+                                key={b.id}
+                                to="/vendor-bills"
+                                onClick={() => setSearchQuery("")}
+                                className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-sm"
+                              >
+                                <span className="font-semibold text-on-surface">{b.billNumber} • {b.vendorName}</span>
+                                <span className="text-secondary font-bold">₹{Number(b.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {matchingAccounts.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2">Accounts</h4>
+                          <div className="flex flex-col gap-1.5">
+                            {matchingAccounts.slice(0, 4).map((a) => (
+                              <Link
+                                key={a.id}
+                                to="/chart-of-accounts"
+                                onClick={() => setSearchQuery("")}
+                                className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-sm"
+                              >
+                                <span className="font-semibold text-on-surface">{a.code} - {a.accountName}</span>
+                                <span className="text-on-surface-variant text-xs">{a.accountType}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 
@@ -309,7 +518,7 @@ export default function Dashboard() {
                       <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
                         {loading ? (
                           <div className="text-center text-on-surface-variant text-sm">Loading...</div>
-                        ) : salesOrders.slice(0, 3).map(order => (
+                        ) : filteredSalesOrders.slice(0, 3).map(order => (
                           <div key={order.id} className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
                             <div className="flex flex-col min-w-0">
                               <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
@@ -381,7 +590,7 @@ export default function Dashboard() {
                       <div className="flex flex-col gap-space-xs mt-space-sm pt-space-sm">
                         {loading ? (
                           <div className="text-center text-on-surface-variant text-sm">Loading...</div>
-                        ) : purchaseOrders.slice(0, 3).map(order => (
+                        ) : filteredPurchaseOrders.slice(0, 3).map(order => (
                           <div key={order.id} className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors text-left">
                             <div className="flex flex-col min-w-0">
                               <span className="font-label-md text-label-md text-on-surface font-semibold truncate">
@@ -398,39 +607,34 @@ export default function Dashboard() {
                         ))}
                       </div>
                     </div>
-                    {/*  CARD 3: Budget Reports  */}
+                    {/*  CARD 3: Receivables & Payables  */}
                     <div className="bg-surface-container-lowest rounded-xl p-space-base flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
                       <div>
                         <div className="flex items-center justify-between pb-space-sm">
                           <div className="flex items-center gap-space-xs">
                             <div className="w-7 h-7 rounded-lg bg-tertiary-fixed/60 text-tertiary flex items-center justify-center">
-                              <PieChart className="text-[16px]" />
+                              <Wallet className="text-[16px]" />
                             </div>
                             <span className="font-headline-sm text-headline-sm text-on-surface">
-                              Budget Reports
+                              AR &amp; AP
                             </span>
                           </div>
                           <Link
                             to="/budget-report"
                             className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold hover:bg-secondary-container transition-colors"
                           >
-                            <span>Report</span>
+                            <span>Budgets</span>
                             <ChevronRight className="text-[14px]" />
                           </Link>
                         </div>
                         <div className="mt-space-2xs">
                           <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                            Fiscal Utilization
+                            Net Position (AR - AP)
                           </span>
                           <div className="flex items-baseline gap-space-xs mt-space-2xs">
-                            <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                              {budgets.length > 0
-                                ? (
-                                  (budgets.reduce((sum, b) => sum + Number(b.achievedAmount || 0), 0) /
-                                    (budgets.reduce((sum, b) => sum + Number(b.committedAmount || 0), 0) || 1)) *
-                                  100
-                                ).toFixed(1)
-                                : "0.0"}%
+                            <span className={`font-numeric-lg text-numeric-lg font-bold ${(totalAR - totalAP) < 0 ? 'text-error' : 'text-primary'}`}>
+                              ₹{Math.abs(totalAR - totalAP).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              {(totalAR - totalAP) < 0 ? ' (Net Payable)' : ''}
                             </span>
                           </div>
                         </div>
@@ -440,43 +644,38 @@ export default function Dashboard() {
                             className="px-space-sm py-space-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm text-label-sm font-semibold"
                             type="button"
                           >
-                            All ({budgets.length})
+                            Overview
                           </button>
                         </div>
                       </div>
                       {/*  Micro Metric Progress Bars  */}
                       <div className="flex flex-col gap-space-sm mt-space-sm pt-space-sm">
-                        {loading ? (
-                          <div className="text-center text-sm text-on-surface-variant">Loading budgets...</div>
-                        ) : budgets.length === 0 ? (
-                          <div className="text-center text-sm text-on-surface-variant">No active budgets</div>
-                        ) : (
-                          budgets.slice(0, 3).map((budget) => {
-                            const achieved = Number(budget.achievedAmount || 0);
-                            const committed = Number(budget.committedAmount || 0);
-                            const progress = committed > 0 ? Math.min((achieved / committed) * 100, 100) : 0;
-                            const isOverBudget = achieved > committed;
-
-                            return (
-                              <div key={budget.id} className="flex flex-col gap-space-2xs">
-                                <div className="flex justify-between font-label-sm text-label-sm">
-                                  <span className="text-on-surface font-medium truncate max-w-[120px]">
-                                    {budget.budgetName}
-                                  </span>
-                                  <span className={`font-semibold ${isOverBudget ? "text-error" : "text-on-surface-variant"}`}>
-                                    {progress.toFixed(0)}%
-                                  </span>
-                                </div>
-                                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${isOverBudget ? "bg-error" : "bg-primary-container"}`}
-                                    style={{ width: `${progress}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
+                        <div className="flex flex-col gap-space-2xs">
+                          <div className="flex justify-between font-label-sm text-label-sm">
+                            <span className="text-on-surface font-medium truncate max-w-[150px]">
+                              Accounts Receivable
+                            </span>
+                            <span className="font-semibold text-primary">
+                              ₹{totalAR.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-primary" style={{ width: `${totalAR > 0 ? 100 : 0}%` }}></div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-space-2xs mt-space-xs">
+                          <div className="flex justify-between font-label-sm text-label-sm">
+                            <span className="text-on-surface font-medium truncate max-w-[150px]">
+                              Accounts Payable
+                            </span>
+                            <span className="font-semibold text-secondary">
+                              ₹{totalAP.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-secondary" style={{ width: `${totalAP > 0 ? 100 : 0}%` }}></div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -486,48 +685,48 @@ export default function Dashboard() {
                       <div className="flex items-center gap-space-xs">
                         <Landmark className="text-primary text-[20px]" />
                         <span className="font-headline-sm text-headline-sm text-on-surface">
-                          Treasury &amp; Ledger Integrity
+                          Treasury &amp; Audit Control
                         </span>
                       </div>
                       <span className="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider">
-                        All Feeds Verified
+                        Real-time Metrics
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-base pt-space-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-space-base pt-space-xs">
                       <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
                         <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                          Available Cash Float
+                          Bank Balance
                         </span>
                         <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
                           ₹{Number(bankAccount.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
-                        <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
-                          <CheckCircle className="text-[14px]" />
-                          <span>Reconciled through 08:00 IST</span>
-                        </span>
                       </div>
                       <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
                         <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                          Pending Reconciliations
+                          Cash Float
                         </span>
                         <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
-                          {pendingEntries} Entries
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant inline-flex items-center gap-space-2xs">
-                          <Clock className="text-[14px]" />
-                          <span>5 require management sign-off</span>
+                          ₹{Number(cashAccount.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
                       <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
                         <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                          Ledger Cryptographic Status
+                          Draft Entries
                         </span>
-                        <span className="font-numeric-lg text-numeric-lg text-primary font-bold">
-                          Consensus 100%
+                        <span className="font-numeric-lg text-numeric-lg text-on-surface font-bold">
+                          {pendingEntries} Pending
                         </span>
-                        <span className="font-body-sm text-body-sm text-secondary font-medium inline-flex items-center gap-space-2xs">
-                          <Lock className="text-[14px]" />
-                          <span>Immutable dual-entry log synced</span>
+                      </div>
+                      <div className="p-space-base rounded-lg bg-surface-container-low flex flex-col gap-space-2xs">
+                        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+                          Ledger Balance Health
+                        </span>
+                        <span className={`font-numeric-lg text-numeric-lg font-bold ${isLedgerBalanced ? 'text-primary' : 'text-error'}`}>
+                          {isLedgerBalanced ? 'Balanced' : 'Imbalanced'}
+                        </span>
+                        <span className={`font-body-sm text-body-sm font-medium inline-flex items-center gap-space-2xs ${isLedgerBalanced ? 'text-secondary' : 'text-error'}`}>
+                          {isLedgerBalanced ? <CheckCircle className="text-[14px]" /> : <AlertTriangle className="text-[14px]" />}
+                          <span>{isLedgerBalanced ? 'Debits = Credits' : `Variance: ₹${ledgerVariance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}</span>
                         </span>
                       </div>
                     </div>
@@ -543,13 +742,13 @@ export default function Dashboard() {
                         Sales Orders
                       </span>
                       <span className="px-space-xs py-0.5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold">
-                        {salesOrders.length} Cards
+                        {filteredSalesOrders.length} Cards
                       </span>
                     </div>
                     <div className="flex flex-col gap-space-sm">
                       {loading ? (
                         <div className="text-center text-sm py-4">Loading...</div>
-                      ) : salesOrders.slice(0, 5).map(order => (
+                      ) : filteredSalesOrders.slice(0, 5).map(order => (
                         <div key={order.id} className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
                           <div className="flex items-center justify-between">
                             <span className="font-label-md text-label-md font-bold text-on-surface">{order.orderNumber}</span>
@@ -569,13 +768,13 @@ export default function Dashboard() {
                         Purchase Orders
                       </span>
                       <span className="px-space-xs py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
-                        {purchaseOrders.length} Cards
+                        {filteredPurchaseOrders.length} Cards
                       </span>
                     </div>
                     <div className="flex flex-col gap-space-sm">
                       {loading ? (
                         <div className="text-center text-sm py-4">Loading...</div>
-                      ) : purchaseOrders.slice(0, 5).map(order => (
+                      ) : filteredPurchaseOrders.slice(0, 5).map(order => (
                         <div key={order.id} className="p-space-sm rounded-lg bg-surface-container-low border border-surface-container hover:shadow-md transition-all">
                           <div className="flex items-center justify-between">
                             <span className="font-label-md text-label-md font-bold text-on-surface">{order.orderNumber}</span>
@@ -646,6 +845,14 @@ export default function Dashboard() {
                     id="directory-filter"
                     placeholder="Filter modules..."
                     type="text"
+                    value={directoryFilter}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setDirectoryFilter(val);
+                      if (val) {
+                        setOpenSections({ sales: true, purchase: true, account: true, report: true });
+                      }
+                    }}
                   />
                 </div>
                 {/*  Navigation Group Container  */}
@@ -950,7 +1157,7 @@ export default function Dashboard() {
       <footer className="w-full bg-surface-container-low/60 py-space-lg mt-space-3xl">
         <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop flex flex-col sm:flex-row items-center justify-between gap-space-base text-on-surface-variant font-body-sm text-body-sm">
           <span>
-            © 2025 UrbanMart Enterprise Operations. All rights reserved.
+            © 2026 UrbanMart Enterprise Operations. All rights reserved.
           </span>
           <div className="flex items-center gap-space-lg">
             <span className="font-label-sm text-label-sm text-secondary font-semibold">

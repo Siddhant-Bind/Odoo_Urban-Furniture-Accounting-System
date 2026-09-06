@@ -220,7 +220,7 @@ export default function Signup() {
         <span className="text-[#CBD5E1]">•</span>
         <span>256-bit TLS Encryption</span>
         <span className="text-[#CBD5E1]">•</span>
-        <span>© 2025 UrbanMart Technologies Inc.</span>
+        <span>© 2026 UrbanMart Technologies Inc.</span>
       </footer>
     </div>
   );

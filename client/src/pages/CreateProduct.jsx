@@ -79,11 +79,11 @@ export default function CreateProduct() {
                 await fetchClient('/products', {
                   method: 'POST',
                   body: JSON.stringify({
-                    name: form.name,
-                    type: form.type === 'Service' ? 'SERVICE' : 'GOODS',
+                    productName: form.name,
+                    type: form.type ? form.type.toUpperCase() : 'GOODS',
+                    category: form.category || undefined,
                     salesPrice: form.salesPrice || "0",
                     cost: form.cost || "0",
-                    // The backend might need categoryId, but for now we skip it if it's optional or not strict
                   })
                 });
                 navigate("/products/list");
